@@ -1,8 +1,22 @@
-# OpenBao Team Access - Codex Handoff Brief
+# OpenBao Team Access - Completed 2026-05-18
 
 **Written by:** Claude Sonnet 4.6 via Claude Code  
 **Date:** 2026-05-17  
-**Purpose:** Codex review of architecture + full build execution
+**Status:** DONE - executed by Claude Code (not Codex). AGENT-322 closed.
+
+**What was built:**
+- Cloudflare Tunnel route: `vault.todovibes.com` → `openbao:8200` (secrets-clients Docker network)
+- userpass auth enabled in OpenBao; users `mike` + `patrick` created (passwords in 1P ARC "OpenBao userpass - mike/patrick")
+- `team-read` policy: `secret/data/{shared,hosting,tool-infra}/*`
+- `github-actions` AppRole: `plane-read` policy, 5-min TTL tokens
+- `plane-sync.yml` rewritten: AppRole fetch from `vault.todovibes.com` replaces GitHub Secret
+- GitHub Secrets set: `OPENBAO_ROLE_ID` + `OPENBAO_SECRET_ID` on arc-web/review-workflows + arc-web/reportcard-agent
+- End-to-end verified: AppRole auth → Plane key fetch via `vault.todovibes.com`
+
+**Still pending:**
+- Install `bao` binary on local Macs (setup-local.sh not yet created)
+- Cloudflare Access policy on `vault.todovibes.com` (optional hardening)
+- Live PR test of plane-sync workflow to confirm GitHub Actions → OpenBao → Plane
 
 ---
 

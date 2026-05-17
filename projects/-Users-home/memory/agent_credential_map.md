@@ -34,7 +34,22 @@ Read pattern: `source /opt/openbao-wrapper/lib.sh; export BAO_AUTH_FILE=/etc/ope
 
 - No dedicated AppRole.
 - Writes: root token from 1P ARC, fetched via `op item get hl23px33remaz2xecl5ecvvaem --vault ARC --fields root_token --reveal`. Valid as of 2026-05-06.
-- Reads (from local machine): `ssh zeroclaw 'source /opt/openbao-wrapper/lib.sh && export BAO_AUTH_FILE=/etc/openbao/host-scripts.env && bao_auth >/dev/null && bao_get <path> <field>'`.
+- Reads (from local machine): SSH to zeroclaw with root token, e.g. `ssh zeroclaw "VAULT_ADDR='http://127.0.0.1:8200' BAO_TOKEN='$ROOT' bao kv get -field=value secret/shared/plane-api-key"`.
+
+## GitHub Actions (plane-sync workflow)
+
+- AppRole: `github-actions` role, policy: `plane-read`
+- plane-read policy: `secret/data/shared/plane-api-key` read-only
+- role_id/secret_id stored in OpenBao at `secret/shared/github-actions-approle`
+- Workflow fetches token at runtime via `vault.todovibes.com/v1/auth/approle/login`
+- GitHub Secrets set: `OPENBAO_ROLE_ID`, `OPENBAO_SECRET_ID` on arc-web/review-workflows + arc-web/reportcard-agent
+
+## Human team members (userpass auth, 2026-05-17)
+
+- Endpoint: `https://vault.todovibes.com` (Cloudflare Tunnel → openbao:8200 on secrets-clients network)
+- Auth: `POST /v1/auth/userpass/login/<username>` with `{"password": "<pass>"}`
+- Policy: `team-read` (secret/data/{shared,hosting,tool-infra}/*)
+- Users: `mike` (1P ARC "OpenBao userpass - mike"), `patrick` (1P ARC "OpenBao userpass - patrick")
 
 ## Top-level secret paths
 
