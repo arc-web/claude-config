@@ -4,7 +4,7 @@ description: Single source for credential rules. OpenBao canonical for runtime/s
 type: project
 originSessionId: 543d8aad-b206-4ecd-88b5-ed0a28587e95
 ---
-# Credentials Architecture (consolidated 2026-04-27, updated 2026-04-28)
+# Credentials Architecture (consolidated 2026-04-27, updated 2026-05-18)
 
 ## QUICK REFERENCE - read first
 
@@ -83,16 +83,40 @@ For any local CLI/tool talking to a VPS-hosted service (Plane, Supabase, Discord
 
 ### OpenBao retrieval commands
 
-**CRITICAL: `bao` binary is NOT installed on the local Mac.** Do NOT run `bao kv get` or any `bao` command locally - it will fail immediately.
+**`bao` binary is NOT installed on the local Mac.** Do NOT run `bao kv get` locally.
 
-- On VPS: AppRole via `/opt/openbao-wrapper/lib.sh` then `bao_get <path> <field>`
-- From local machine (only option): SSH to VPS:
+**Two valid patterns for local agents (Claude Code):**
+
+**Option A - Direct (preferred): AppRole via vault.todovibes.com**
+- Cloudflare Tunnel exposes OpenBao at `https://vault.todovibes.com`
+- Local Claude Code has AppRole `claude-code-local` - bootstrapped from 1P ARC item "OpenBao AppRole - claude-code-local"
+- Audit log shows `claude-code-local` fingerprint (NOT zeroclaw's identity)
+- Pattern (Python, no SSH):
+  ```python
+  import urllib.request, json, subprocess
+  item = json.loads(subprocess.check_output(
+      ['op','item','get','OpenBao AppRole - claude-code-local','--vault','ARC','--format','json','--reveal'],
+      text=True))
+  fields = {f['label']: f.get('value','') for f in item['fields']}
+  auth = json.loads(urllib.request.urlopen(urllib.request.Request(
+      'https://vault.todovibes.com/v1/auth/approle/login',
+      data=json.dumps({'role_id': fields['role_id'], 'secret_id': fields['secret_id']}).encode(),
+      headers={'Content-Type': 'application/json', 'User-Agent': 'vault-client/1.0'},
+      method='POST')).read())
+  token = auth['auth']['client_token']
+  value = json.loads(urllib.request.urlopen(urllib.request.Request(
+      'https://vault.todovibes.com/v1/secret/data/<path>',
+      headers={'X-Vault-Token': token, 'User-Agent': 'vault-client/1.0'})).read())['data']['data']['value']
   ```
-  ssh zeroclaw 'source /opt/openbao-wrapper/lib.sh && export BAO_AUTH_FILE=/etc/openbao/host-scripts.env && bao_auth >/dev/null && bao_get <path> <field>'
+
+**Option B - SSH fallback (writes/admin only):** SSH to zeroclaw with root token from 1P ARC
   ```
-- **There is no faster path. OpenBao via SSH is the only path for service tokens.**
-  - 1P Zeroclaw vault field name is `credential` (not `value`) - only relevant if OpenBao is confirmed broken
-  - If OpenBao is unreachable: declare "⚠ EMERGENCY FALLBACK: OpenBao unreachable - [exact error]. Using 1P. This is broken and needs fixing." Then and only then use 1P.
+  ROOT=$(op item get hl23px33remaz2xecl5ecvvaem --vault ARC --fields root_token --reveal)
+  ssh zeroclaw "VAULT_ADDR='http://127.0.0.1:8200' BAO_TOKEN='$ROOT' /usr/local/bin/bao kv put secret/<path> value=<val>"
+  ```
+  Use Option B only for writes/policy changes. Reads go via Option A.
+
+- If vault.todovibes.com unreachable: declare "⚠ EMERGENCY FALLBACK: OpenBao unreachable - [exact error]. Using 1P. This is broken and needs fixing." Then and only then use 1P.
 
 ---
 

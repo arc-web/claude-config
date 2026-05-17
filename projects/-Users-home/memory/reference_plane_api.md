@@ -6,14 +6,27 @@ originSessionId: b615afa1-6455-4b6f-a95b-ec9b51a07953
 ---
 # Plane API Quick Reference (verified 2026-05-16)
 
-## Key retrieval - OpenBao canonical (verified 2026-05-17)
+## Key retrieval - OpenBao direct (updated 2026-05-18)
 
-```bash
-ROOT=$(op item get hl23px33remaz2xecl5ecvvaem --vault ARC --fields root_token --reveal)
-PLANE_KEY=$(ssh zeroclaw "VAULT_ADDR='http://127.0.0.1:8200' BAO_TOKEN='$ROOT' bao kv get -field=value secret/shared/plane-api-key")
+```python
+import urllib.request, json, subprocess
+item = json.loads(subprocess.check_output(
+    ['op','item','get','OpenBao AppRole - claude-code-local','--vault','ARC','--format','json','--reveal'],
+    text=True))
+fields = {f['label']: f.get('value','') for f in item['fields']}
+auth = json.loads(urllib.request.urlopen(urllib.request.Request(
+    'https://vault.todovibes.com/v1/auth/approle/login',
+    data=json.dumps({'role_id': fields['role_id'], 'secret_id': fields['secret_id']}).encode(),
+    headers={'Content-Type': 'application/json', 'User-Agent': 'vault-client/1.0'},
+    method='POST')).read())
+token = auth['auth']['client_token']
+key = json.loads(urllib.request.urlopen(urllib.request.Request(
+    'https://vault.todovibes.com/v1/secret/data/shared/plane-api-key',
+    headers={'X-Vault-Token': token, 'User-Agent': 'vault-client/1.0'})).read())['data']['data']['value']
 ```
 
-- OpenBao path: `secret/shared/plane-api-key` field `value`
+- OpenBao path: `secret/data/shared/plane-api-key` field `value` (KV v2 - note `/data/` prefix)
+- AppRole: `claude-code-local` → own fingerprint in audit log
 - 1P emergency fallback (Zeroclaw vault): item `x7qhfdaos76fcymuztjjscmrpa` field `credential`
 - Key length: 64 chars
 

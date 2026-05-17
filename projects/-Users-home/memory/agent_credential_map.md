@@ -30,11 +30,14 @@ Inside container: `curl -s http://127.0.0.1:8100/v1/secret/data/<path> | jq -r .
 
 Read pattern: `source /opt/openbao-wrapper/lib.sh; export BAO_AUTH_FILE=/etc/openbao/<role>.env; bao_auth >/dev/null && bao_get <path> <field>`.
 
-## Claude Code (me)
+## Claude Code (local Mac)
 
-- No dedicated AppRole.
-- Writes: root token from 1P ARC, fetched via `op item get hl23px33remaz2xecl5ecvvaem --vault ARC --fields root_token --reveal`. Valid as of 2026-05-06.
-- Reads (from local machine): SSH to zeroclaw with root token, e.g. `ssh zeroclaw "VAULT_ADDR='http://127.0.0.1:8200' BAO_TOKEN='$ROOT' bao kv get -field=value secret/shared/plane-api-key"`.
+- AppRole: `claude-code-local` - own fingerprint in audit log (not zeroclaw)
+- Bootstrap: 1P ARC item "OpenBao AppRole - claude-code-local" fields `role_id` + `secret_id`
+- Reads: direct HTTP to `https://vault.todovibes.com` (Cloudflare Tunnel → openbao container)
+- Policy: `claude-code-read` - covers shared/*, hosting/*, tool-infra/*, hermes/*, search-console/*, projects/*
+- Token TTL: 8h
+- Writes/admin: root token from 1P ARC `hl23px33remaz2xecl5ecvvaem` field `root_token`, via SSH to zeroclaw
 
 ## GitHub Actions (plane-sync workflow)
 
