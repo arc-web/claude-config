@@ -87,8 +87,8 @@ For any local CLI/tool talking to a VPS-hosted service (Plane, Supabase, Discord
 
 **Two valid patterns for local agents (Claude Code):**
 
-**Option A - Direct (preferred): AppRole via vault.todovibes.com**
-- Cloudflare Tunnel exposes OpenBao at `https://vault.todovibes.com`
+**Option A - Direct (preferred): AppRole via vault.aibrainbuilders.com**
+- Cloudflare Tunnel exposes OpenBao at `https://vault.aibrainbuilders.com`
 - Local Claude Code has AppRole `claude-code-local` - bootstrapped from 1P ARC item "OpenBao AppRole - claude-code-local"
 - Audit log shows `claude-code-local` fingerprint (NOT zeroclaw's identity)
 - Pattern (Python, no SSH):
@@ -99,13 +99,13 @@ For any local CLI/tool talking to a VPS-hosted service (Plane, Supabase, Discord
       text=True))
   fields = {f['label']: f.get('value','') for f in item['fields']}
   auth = json.loads(urllib.request.urlopen(urllib.request.Request(
-      'https://vault.todovibes.com/v1/auth/approle/login',
+      'https://vault.aibrainbuilders.com/v1/auth/approle/login',
       data=json.dumps({'role_id': fields['role_id'], 'secret_id': fields['secret_id']}).encode(),
       headers={'Content-Type': 'application/json', 'User-Agent': 'vault-client/1.0'},
       method='POST')).read())
   token = auth['auth']['client_token']
   value = json.loads(urllib.request.urlopen(urllib.request.Request(
-      'https://vault.todovibes.com/v1/secret/data/<path>',
+      'https://vault.aibrainbuilders.com/v1/secret/data/<path>',
       headers={'X-Vault-Token': token, 'User-Agent': 'vault-client/1.0'})).read())['data']['data']['value']
   ```
 
@@ -116,7 +116,7 @@ For any local CLI/tool talking to a VPS-hosted service (Plane, Supabase, Discord
   ```
   Use Option B only for writes/policy changes. Reads go via Option A.
 
-- If vault.todovibes.com unreachable: declare "⚠ EMERGENCY FALLBACK: OpenBao unreachable - [exact error]. Using 1P. This is broken and needs fixing." Then and only then use 1P.
+- If vault.aibrainbuilders.com unreachable: declare "⚠ EMERGENCY FALLBACK: OpenBao unreachable - [exact error]. Using 1P. This is broken and needs fixing." Then and only then use 1P.
 
 ---
 

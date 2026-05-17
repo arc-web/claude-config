@@ -5,16 +5,16 @@
 **Status:** DONE - executed by Claude Code (not Codex). AGENT-322 closed.
 
 **What was built:**
-- Cloudflare Tunnel route: `vault.todovibes.com` → `openbao:8200` (secrets-clients Docker network)
+- Cloudflare Tunnel route: `vault.aibrainbuilders.com` → `openbao:8200` (secrets-clients Docker network)
 - userpass auth enabled in OpenBao; users `mike` + `patrick` created (passwords in 1P ARC "OpenBao userpass - mike/patrick")
 - `team-read` policy: `secret/data/{shared,hosting,tool-infra}/*`
 - `github-actions` AppRole: `plane-read` policy, 5-min TTL tokens
-- `plane-sync.yml` rewritten: AppRole fetch from `vault.todovibes.com` replaces GitHub Secret
+- `plane-sync.yml` rewritten: AppRole fetch from `vault.aibrainbuilders.com` replaces GitHub Secret
 - GitHub Secrets set: `OPENBAO_ROLE_ID` + `OPENBAO_SECRET_ID` on arc-web/review-workflows + arc-web/reportcard-agent
-- End-to-end verified: AppRole auth → Plane key fetch via `vault.todovibes.com`
+- End-to-end verified: AppRole auth → Plane key fetch via `vault.aibrainbuilders.com`
 
 **Still pending:**
-- Cloudflare Access policy on `vault.todovibes.com` (optional hardening)
+- Cloudflare Access policy on `vault.aibrainbuilders.com` (optional hardening)
 - Live PR test of plane-sync workflow to confirm GitHub Actions → OpenBao → Plane
 
 ---

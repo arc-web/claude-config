@@ -34,7 +34,7 @@ Read pattern: `source /opt/openbao-wrapper/lib.sh; export BAO_AUTH_FILE=/etc/ope
 
 - AppRole: `claude-code-local` - own fingerprint in audit log (not zeroclaw)
 - Bootstrap: 1P ARC item "OpenBao AppRole - claude-code-local" fields `role_id` + `secret_id`
-- Reads: direct HTTP to `https://vault.todovibes.com` (Cloudflare Tunnel → openbao container)
+- Reads: direct HTTP to `https://vault.aibrainbuilders.com` (Cloudflare Tunnel → openbao container)
 - Policy: `claude-code-read` - covers shared/*, hosting/*, tool-infra/*, hermes/*, search-console/*, projects/*
 - Token TTL: 8h
 - Writes/admin: root token from 1P ARC `hl23px33remaz2xecl5ecvvaem` field `root_token`, via SSH to zeroclaw
@@ -44,12 +44,12 @@ Read pattern: `source /opt/openbao-wrapper/lib.sh; export BAO_AUTH_FILE=/etc/ope
 - AppRole: `github-actions` role, policy: `plane-read`
 - plane-read policy: `secret/data/shared/plane-api-key` read-only
 - role_id/secret_id stored in OpenBao at `secret/shared/github-actions-approle`
-- Workflow fetches token at runtime via `vault.todovibes.com/v1/auth/approle/login`
+- Workflow fetches token at runtime via `vault.aibrainbuilders.com/v1/auth/approle/login`
 - GitHub Secrets set: `OPENBAO_ROLE_ID`, `OPENBAO_SECRET_ID` on arc-web/review-workflows + arc-web/reportcard-agent
 
 ## Human team members (userpass auth, 2026-05-17)
 
-- Endpoint: `https://vault.todovibes.com` (Cloudflare Tunnel → openbao:8200 on secrets-clients network)
+- Endpoint: `https://vault.aibrainbuilders.com` (Cloudflare Tunnel → openbao:8200 on secrets-clients network)
 - Auth: `POST /v1/auth/userpass/login/<username>` with `{"password": "<pass>"}`
 - Policy: `team-read` (secret/data/{shared,hosting,tool-infra}/*)
 - Users: `mike` (1P ARC "OpenBao userpass - mike"), `patrick` (1P ARC "OpenBao userpass - patrick")

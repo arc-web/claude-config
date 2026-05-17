@@ -15,13 +15,13 @@ item = json.loads(subprocess.check_output(
     text=True))
 fields = {f['label']: f.get('value','') for f in item['fields']}
 auth = json.loads(urllib.request.urlopen(urllib.request.Request(
-    'https://vault.todovibes.com/v1/auth/approle/login',
+    'https://vault.aibrainbuilders.com/v1/auth/approle/login',
     data=json.dumps({'role_id': fields['role_id'], 'secret_id': fields['secret_id']}).encode(),
     headers={'Content-Type': 'application/json', 'User-Agent': 'vault-client/1.0'},
     method='POST')).read())
 token = auth['auth']['client_token']
 key = json.loads(urllib.request.urlopen(urllib.request.Request(
-    'https://vault.todovibes.com/v1/secret/data/shared/plane-api-key',
+    'https://vault.aibrainbuilders.com/v1/secret/data/shared/plane-api-key',
     headers={'X-Vault-Token': token, 'User-Agent': 'vault-client/1.0'})).read())['data']['data']['value']
 ```
 
