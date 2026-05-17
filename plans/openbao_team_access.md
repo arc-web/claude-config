@@ -14,7 +14,6 @@
 - End-to-end verified: AppRole auth → Plane key fetch via `vault.todovibes.com`
 
 **Still pending:**
-- Install `bao` binary on local Macs (setup-local.sh not yet created)
 - Cloudflare Access policy on `vault.todovibes.com` (optional hardening)
 - Live PR test of plane-sync workflow to confirm GitHub Actions → OpenBao → Plane
 
