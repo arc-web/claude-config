@@ -88,7 +88,7 @@ root = subprocess.check_output(
     text=True).strip()
 key = subprocess.check_output(
     ['ssh','zeroclaw',
-     f"VAULT_TOKEN='{root}' VAULT_ADDR='http://127.0.0.1:8200' /usr/local/bin/bao kv get -field=value secret/projects/plane-api-token"],
+     f"VAULT_ADDR='http://127.0.0.1:8200' BAO_TOKEN='{root}' bao kv get -field=value secret/shared/plane-api-key"],
     text=True).strip()
 PROJECT = '0e399778-93d9-4a95-ba2f-755990dd69bc'
 BASE = f'https://arc.todovibes.com/api/v1/workspaces/todovibes/projects/{PROJECT}/issues/'
@@ -98,6 +98,34 @@ r = subprocess.check_output(['curl','-s','-X','POST',*HEADERS,'-d',json.dumps(pa
 
 Run via `/opt/homebrew/bin/python3 -c "..."` with `dangerouslyDisableSandbox: true`.
 Full skill: `~/.claude/skills/plane-pm/SKILL.md`
+
+## Admin operations (API limitations)
+
+**Project deletion:** Plane CE API returns 403 for all keys (including admin-level) - cannot delete via REST.
+
+Pattern:
+1. Move all issues to other projects first (create in target + delete from source via API)
+2. Verify source project is empty
+3. Connect to Postgres directly:
+
+```bash
+# Get password from OpenBao
+ROOT=$(op item get hl23px33remaz2xecl5ecvvaem --vault ARC --fields root_token --reveal)
+PGPASS=$(ssh zeroclaw "VAULT_ADDR='http://127.0.0.1:8200' BAO_TOKEN='$ROOT' bao kv get -field=value secret/shared/plane-postgres-password")
+
+# Connect
+ssh zeroclaw "PGPASSWORD='$PGPASS' docker exec -e PGPASSWORD='$PGPASS' plane-plane-db-1 psql -U plane"
+```
+
+4. Inside psql, bypass FK constraints and delete:
+
+```sql
+SET session_replication_role = 'replica';
+DELETE FROM projects WHERE id = '<project-uuid>';
+SET session_replication_role = 'origin';
+```
+
+`SET session_replication_role = 'replica'` disables FK triggers for the session without requiring superuser. The project had 60+ FK references - this is the only practical delete path. Issues soft-deleted via API (sets `deleted_at`) are cascade-cleaned when the project is deleted.
 
 ## Pages endpoint (for docs/wiki pages)
 

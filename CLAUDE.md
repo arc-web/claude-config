@@ -49,6 +49,7 @@ CLAUDE.md stays small. Task matches domain - Read target file once at start.
 | Supabase SQL, client table, relationship model | `~/.claude/skills/supabase/SKILL.md` |
 | Ad audits, creative generation, campaign planning | `~/.claude/skills/ads/ads/SKILL.md` |
 | Plane task operations (create, update, query via API) | `~/.claude/skills/plane-pm/SKILL.md` |
+| Plane swarm program (build a multi-agent task tree from a plan) | `~/.claude/skills/swarm-program/SKILL.md` |
 
 Read matching memory rule file when behavior-specific:
 - `rules_workflow.md` - approach/autonomy/completion

@@ -734,6 +734,8 @@ read, plan, dispatch, and write phase-level docs.
 
 ## Appendix C: Live Plane Task Tree (created 2026-05-16)
 
+> **Future programs**: this tree was built manually. Programs after this one use `/swarm-program <plan>` (skill) which wraps `plane tree create/polish/status/verify` and produces the same shape automatically. See `~/.claude/skills/swarm-program/SKILL.md` and `~/ai/agents/projectmanagement/plane_agent/SOP.md` Tree commands section.
+
 The Path to Launch program is now live in Plane (AGENT project, workspace `todovibes`). 66 tasks total. Tree:
 
 ### Root + Stage Parents
