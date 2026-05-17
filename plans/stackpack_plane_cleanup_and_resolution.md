@@ -102,13 +102,14 @@ Set via PATCH `estimate_point` field. Estimate-point is Plane's free-form intege
 - Add memory entry mirroring `reference_therappc_site.md`
 - Acceptance: repo exists, README.md visible at root on GitHub, local push works
 
-### COMM-18 - GA4 measurement ID
-- Confirm with user: reuse ARC's existing GA4 property or new `stackpack.app` stream
-- If reuse: pull measurement ID from 1P ARC item `Google Analytics OAuth - advertisingreportcard`
+### COMM-18 - GA4 measurement ID (dedicated property)
+- Create new GA4 property "StackPack" in the ARC Google Analytics account (advertisingreportcard@gmail.com)
+- Add Web data stream for `https://stackpack.app`, copy measurement ID `G-XXXXXXXXXX`
+- Store ID in OpenBao at `secret/shared/stackpack-ga4-measurement-id` + mirror to 1P ARC vault
 - Insert standard gtag.js snippet in `<head>` of `index.html` (before closing `</head>`)
 - `cf-deploy update stackpack`
 - Verify: open page, check Realtime in GA4, confirm hit lands
-- Acceptance: GA4 Realtime shows stackpack.app pageview within 30s of opening site; cf-deploy lint no longer flags GA4 INFO
+- Acceptance: dedicated StackPack GA4 property exists; Realtime shows stackpack.app pageview within 30s; cf-deploy lint no longer flags GA4 INFO
 
 ### COMM-19 - STACKPACK.md update in portfolio repo
 - Clone or pull `arc-web/portfolio`
@@ -141,27 +142,29 @@ Set via PATCH `estimate_point` field. Estimate-point is Plane's free-form intege
 - Post all 8 to Skool calendar with Zoom/Riverside link
 - Acceptance: 8 calendar entries in Skool with owner, time, description; first workshop also pinned in Skool community feed
 
-### COMM-22 - Private Discord channel + access flow
-- Decide: ARC Discord new channel vs. dedicated StackPack server (recommend ARC channel with restricted role to minimize sprawl)
-- Create `#stackpack-yearly` channel on ARC Discord, restrict to `StackPack Yearly` role
-- Set up webhook from Skool yearly purchase event:
-  - Skool webhook → n8n flow → Discord bot role grant via `discord_agent` CLI (`~/ai/agents/comms/discord_agent`)
-  - Token from 1P Zeroclaw `5elrtua2364vr2oogwqp4wch5q` (Charlie bot)
-- Document join steps in Skool "Welcome - yearly members" thread
-- Acceptance: yearly member purchases Skool plan → role applied within 5 min → can post in private channel; documented in Skool welcome thread
+### COMM-22 - StackPack Discord server (marketing surface for now)
+- User decision: StackPack will eventually have its own Discord where all users land. For launch, the Discord is **a marketing claim on the site** rather than a fully gated yearly perk.
+- Concrete launch scope:
+  - Confirm StackPack Discord server exists (create if not)
+  - Set up invite link, embed in Skool yearly welcome thread + Facebook pinned post
+  - Public for now; gating to be added when yearly volume justifies it
+  - Add `discord.gg/<invite>` to stackpack.app footer
+- Acceptance: StackPack Discord server live with public invite; invite link present in Skool welcome thread, FB pinned post, and site footer
+- Out of scope (deferred): role-gated channels, Skool → Discord webhook role grant, automated provisioning
 
-### COMM-23 - Cal.com 1-on-1 booking for yearly tier
-- Create Cal.com event "StackPack 1-on-1 Strategy" - 45 min, Mike OR Oliver round-robin
-- Add intake questions: current stack, biggest blocker, 1-sentence outcome wanted
-- Gate via Cal.com password OR custom URL token, distributed only in Skool yearly welcome thread + Discord
-- Link from Skool yearly member dashboard (custom HTML block if Skool allows)
-- Acceptance: yearly member receives Cal.com link in welcome flow; can book; intake questions captured in booking notification
+### COMM-23 - 1-on-1 access via Discord DM (no booking tool)
+- User decision: no Cal.com / Calendly. Yearly members message Mike or Oliver directly on Discord to schedule.
+- Concrete scope:
+  - Document the DM flow in Skool yearly welcome thread ("Yearly member? DM @mike or @oliver on Discord with 3 lines: your stack, your biggest blocker, the outcome you want from 30 min")
+  - Update site copy (Pricing tier yearly bullet) from "1-on-1 strategy call with our team" to "Direct DM access to Mike + Oliver on Discord for 1-on-1 strategy"
+  - Update FAQ entry "What do I get with yearly" to match
+- Acceptance: Skool welcome thread documents DM flow; stackpack.app pricing + FAQ updated and redeployed; no booking tool created
 
 ### COMM-24 - Hard-reload guidance for cached 301 visitors
-- Draft short post: "If stackpack.app keeps redirecting to skool.com - hard reload (Cmd+Shift+R / Ctrl+Shift+R) or open in private window. Browser cached our old redirect. Will clear within a few days."
-- Post to: Facebook group (pinned 14 days), Skool announcement, brief LinkedIn note from Mike
-- Optional: add dismissible banner on stackpack.app for 14 days targeting users with `Referer: skool.com` (Cloudflare Worker rule)
-- Acceptance: post live in all 3 channels; ≥ 14-day pin on FB; banner deployed or decision logged "skip banner"
+- User decision: skip on-site banner. Social posts only.
+- Draft short post: "If stackpack.app keeps redirecting to skool.com - hard reload (Cmd+Shift+R / Ctrl+Shift+R) or open in a private window. Browser cached our old redirect. Will clear within a few days."
+- Post to: Facebook group (pinned 14 days), Skool announcement, brief LinkedIn note from Mike, Discord announcement
+- Acceptance: post live in 4 channels; ≥ 14-day pin on FB and Skool
 
 ### COMM-8 - StackPack community ops playbook
 - Document in a Plane page under COMM project: `StackPack - Ops Playbook`
@@ -212,9 +215,18 @@ After cleanup + execution:
 4. For each renamed task: confirm new name appears in UI
 5. For each Phase 4 resolution plan: confirm "Resolution plan" section visible inside description
 
-## Open questions
+## User-confirmed inputs (locked 2026-05-18)
 
-1. **GA4 setup** - reuse ARC's existing GA4 property or create a new property for stackpack.app? Affects COMM-18 scope.
-2. **Discord server** - put `#stackpack-yearly` on existing ARC Discord or create a dedicated StackPack Discord? Recommend ARC Discord for now.
-3. **Cal.com vs alternative** - Cal.com or Calendly for booking? Default Cal.com per existing arc-web tooling.
-4. **301 cache banner** - deploy Cloudflare Worker banner targeting `Referer: skool.com` or skip in favor of social posts only? Default: skip banner, posts only.
+1. **GA4**: Create new dedicated GA4 property for stackpack.app under ARC account.
+2. **Discord**: StackPack runs its own Discord server (future home for all users). For launch, used as a marketing claim on the site - public invite link, no role-gated channels yet.
+3. **Booking tool**: None. Yearly members DM Mike or Oliver on Discord directly. Update site copy + FAQ to match.
+4. **301 banner**: Skip. Social posts to FB, Skool, LinkedIn, Discord only.
+
+## Additional task spawned by user input
+
+**COMM-28 (new)** - "[StackPack] Update site copy + FAQ: yearly perk = Discord DM access (not Cal.com booking)"
+- One-line edit in pricing tier + FAQ entry on stackpack.app
+- Redeploy via cf-deploy update
+- Estimate: 5 min
+- Cycle: Member Tier Buildout
+- Parent: COMM-26 epic
