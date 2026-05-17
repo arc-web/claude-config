@@ -1,0 +1,41 @@
+# Secrets and credentials - NEVER COMMIT
+.secrets/
+channels/
+*.token
+*.env
+*.key
+
+# Session transcripts and internal state
+projects/*/*.jsonl
+projects/*/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]-*/
+sessions/
+session-env
+shell-snapshots/
+stats-cache.json
+telemetry/
+scheduled_tasks.lock
+*.lock
+file-history/
+debug/
+
+# Machine-generated / transient
+tasks/
+backups/
+cache/
+*.cache
+*.bak
+supabase-mcp.sh.disabled
+.caveman-active
+.last-cleanup
+CLAUDE.original.md
+
+# Settings (machine-specific, may contain state)
+settings.json
+settings.local.json
+settings.json.bak
+
+# Plugins (embedded git repos - handle separately)
+plugins/
+
+# lean-ctx internal
+.lean-ctx/

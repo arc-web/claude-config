@@ -1,0 +1,111 @@
+---
+name: Plane API quick reference
+description: Plane CE at arc.todovibes.com - API key retrieval, project UUIDs, correct endpoint patterns. Prevents repeated discovery of these basics.
+type: reference
+originSessionId: b615afa1-6455-4b6f-a95b-ec9b51a07953
+---
+# Plane API Quick Reference (verified 2026-05-16)
+
+## Key retrieval - OpenBao canonical (verified 2026-05-17)
+
+```bash
+ROOT=$(op item get hl23px33remaz2xecl5ecvvaem --vault ARC --fields root_token --reveal)
+PLANE_KEY=$(ssh zeroclaw "VAULT_ADDR='http://127.0.0.1:8200' BAO_TOKEN='$ROOT' bao kv get -field=value secret/shared/plane-api-key")
+```
+
+- OpenBao path: `secret/shared/plane-api-key` field `value`
+- 1P emergency fallback (Zeroclaw vault): item `x7qhfdaos76fcymuztjjscmrpa` field `credential`
+- Key length: 64 chars
+
+## Base URL + required header
+
+```
+https://arc.todovibes.com/api/v1/workspaces/<workspace_slug>/
+User-Agent: plane-cli/1.0   ← REQUIRED (Cloudflare blocks default UA without it)
+```
+
+## Workspace slugs
+
+| Slug | Display name | Use |
+|------|-------------|-----|
+| `todovibes` | Internal | Team/agent work |
+| `clients` | Clients | Per-client projects |
+
+## Internal workspace project UUIDs (todovibes, verified 2026-05-17)
+
+| Identifier | UUID | Name |
+|-----------|------|------|
+| AGENT | 0e399778-93d9-4a95-ba2f-755990dd69bc | Internal Ops |
+| INFRA | 9643da9a-da40-4f40-8cbe-561822288cd4 | Infrastructure |
+| COMM | 980f20b4-80b9-4605-864f-6e736a65446b | Communities |
+| ADS | b1b1b597-02d6-475d-9b5c-37c64276e1ea | Google Ads |
+| LAND | b7f45068-8020-4245-ab48-a2234a9c7d43 | Web Design Tech |
+| DEVOPS | b6caface-b889-49da-ae71-f87bfc63b4d4 | DevOps |
+| AGNTS | e8e54f27-b0f3-4073-8d10-4ec82ed2d180 | Agents |
+
+**Use UUID in API paths, NOT the short identifier.**
+
+## Issues endpoint
+
+```bash
+# Get issues (use UUID not identifier)
+curl -s -H "X-Api-Key: $PLANE_KEY" -H "User-Agent: plane-cli/1.0" \
+  "https://arc.todovibes.com/api/v1/workspaces/todovibes/projects/<UUID>/issues/?per_page=100"
+
+# state_detail is NULL inline - must fetch /states/ separately and join by state UUID
+curl -s ... "<base>/projects/<UUID>/states/"
+```
+
+- `state_detail` is NOT returned inline in issues - always null
+- State UUID is in `i['state']` field - join against `/states/` response
+- State groups: `unstarted`, `started`, `completed`, `cancelled`, `backlog`
+
+## PATCH (update issue)
+
+```bash
+# Must use issue UUID (.id field), NOT sequence_id (display only)
+PATCH /projects/<UUID>/issues/<issue-uuid>/
+# Body: any subset of {name, description_html, state}
+```
+
+Get UUID by querying issues list and extracting `.id` per result.
+
+## AGENT project state IDs (todovibes)
+
+| State | UUID |
+|-------|------|
+| Todo | `c0528a48-cbb1-44e5-9f09-1e8fc566bb56` |
+| In Progress | `bdb50dbe-2fe8-4f65-848c-1439cfa64ad5` |
+| Done | `9bafcd6c-f951-4b88-8c49-f8ef2875bc9a` |
+| Blocked | `ce62803d-b9cc-4214-b99d-823d8afff7c8` |
+
+## Multi-issue Python pattern (shell functions break with lean-ctx hook)
+
+```python
+import subprocess, json
+root = subprocess.check_output(
+    ['op','item','get','hl23px33remaz2xecl5ecvvaem','--vault','ARC','--reveal','--fields','root_token'],
+    text=True).strip()
+key = subprocess.check_output(
+    ['ssh','zeroclaw',
+     f"VAULT_TOKEN='{root}' VAULT_ADDR='http://127.0.0.1:8200' /usr/local/bin/bao kv get -field=value secret/projects/plane-api-token"],
+    text=True).strip()
+PROJECT = '0e399778-93d9-4a95-ba2f-755990dd69bc'
+BASE = f'https://arc.todovibes.com/api/v1/workspaces/todovibes/projects/{PROJECT}/issues/'
+HEADERS = ['-H',f'X-API-Key: {key}','-H','User-Agent: plane-cli/1.0','-H','Content-Type: application/json']
+r = subprocess.check_output(['curl','-s','-X','POST',*HEADERS,'-d',json.dumps(payload),BASE], text=True)
+```
+
+Run via `/opt/homebrew/bin/python3 -c "..."` with `dangerouslyDisableSandbox: true`.
+Full skill: `~/.claude/skills/plane-pm/SKILL.md`
+
+## Pages endpoint (for docs/wiki pages)
+
+```bash
+curl -s -X POST -H "X-Api-Key: $PLANE_KEY" -H "User-Agent: plane-cli/1.0" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Page Title","description_html":"<p>content</p>","access":0}' \
+  "https://arc.todovibes.com/api/v1/workspaces/todovibes/projects/<UUID>/pages/"
+```
+
+- `access: 0` = public within workspace, `access: 1` = private to creator
