@@ -15,6 +15,7 @@
 - ["open in html" = codebase_helper, never pandoc](feedback_open_in_html_tool.md) - script is at ~/ai/agents/development/codebase_helper/scripts/preview_markdown.py (NOT root), Material for MkDocs themed local site
 - [Open files immediately after creating them](feedback_open_files_immediately.md) - after pandoc/doc creation, run `soffice <file> &` immediately, never ask
 - [Documents go to Desktop not /tmp](feedback_documents_to_desktop.md) - all ODT/PDF/HTML reports save to ~/Desktop/, never /tmp
+- [Tool transparency - declare, surface, interpret](rules_tool_transparency.md) - proactive tool use = name the tool + shape the output + say what the human should do; ban on "the board shows" without citing command; applies all agents/tools
 - [Response format, output, tone](rules_response_format.md) - plain-English lead + bullets, no sycophancy, pasteable output, no em dashes, anti-overengineering
 - [Plain language at end of tasks](feedback_plain_language.md) - no structured recap bullets after finishing work, just say it in plain sentences
 - [Plain language communication](feedback_communication_plain.md) - ditch jargon for user messages; translate SDK names, protocol terms, implementation details
