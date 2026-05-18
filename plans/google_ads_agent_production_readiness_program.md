@@ -855,4 +855,35 @@ Tasks created above have title + description + parent linkage + state. Owner-set
 
 ---
 
+## SUPERSEDED 2026-05-19 - HARD SCOPE CUT
+
+After review, the 8-stage / 66-task program above was too much for a 1-person operation. Cut to **5 critical streams** focused on the live-upload switch. The rest deferred until after first real live use proves the platform.
+
+**Cancelled in Plane** (2026-05-19): AGENT-232..239 (8 stage parents) + AGENT-248..297 (52 Stage 2-8 leaves). 58 tasks total moved to `Cancelled` state with explanatory comment.
+
+**Kept** (Stage 1 work, already complete + gate pending): AGENT-241..246 (Completed) + AGENT-247 (Needs Approval). AGENT-231 root (In Progress) retained as program tracker.
+
+**Replaced with 5 hard-scope streams** under AGENT-231:
+
+| Plane ID | Stream | Why critical |
+|---|---|---|
+| **AGENT-331** | `[ARC-HS1]` Live-upload safety tests | Barrier never tested. Future refactor could silently remove it. |
+| **AGENT-332** | `[ARC-HS2]` Manifest schema + deprecation tombstone | Output contract proven + dead module impossible to misuse. |
+| **AGENT-333** | `[ARC-HS3]` E2E workflow tests | Prove all 6 workflow modes actually work end-to-end. |
+| **AGENT-334** | `[ARC-HS4]` Launch rulebook + client signoff trail | Define exactly when + how live switch can flip. |
+| **AGENT-335** | `[ARC-HS5]` Trial run on real client (no live action) | Final proof before declared production-ready. |
+
+**What was dropped (and why we'll add later if needed)**:
+- **CI / pre-commit / lint** (was Stage 2): nice-to-have. Manual checks for now. Add after first live use stresses the workflow.
+- **25 entrypoint wrapper tests** (was Stage 3.1): speculative coverage. Cores tested via E2E suite is enough.
+- **203-file boundary migration** (was Stage 5): cosmetic. Current mingling isn't breaking anything. Defer.
+- **Route planner endpoint criteria doc** (was Stage 6.3): over-specified. Existing INGESTION_OPERATING_SYSTEM.md sufficient.
+- **Watch Live (Monitor + Recovery)** (was Stage 8): ops work, not project work. Set up as cron + on-demand after first live use.
+
+**Cost basis**: 5 Opus sessions estimated total. No Sonnet swarm. No restructure. No new infrastructure beyond what's already built (CLI tree commands, swarm-program skill, plane-pm-agent repo, codebase_helper).
+
+**Sister plan also superseded**: `google_ads_agent_sonnet_swarm_execution.md` (Sonnet swarm execution) is parked. Hard scope means Opus drives all 5 streams serially. Plan stays on disk for reference if scope reopens later.
+
+---
+
 **End of plan.**

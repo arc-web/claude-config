@@ -1,5 +1,7 @@
 # Path to Launch — Sonnet Swarm Execution Plan
 
+> **SUPERSEDED 2026-05-19**: hard-scope cut. The 5-stream Opus-driven plan in `google_ads_agent_production_readiness_program.md` ("Hard Scope Cut" section at bottom) replaces this. No Sonnet swarm. No Plane restructure. Stream tasks live at AGENT-331..335. This file kept on disk for reference if scope reopens.
+
 > Plan file: `google_ads_agent_sonnet_swarm_execution.md` (renamed from harness slug `witty-roaming-hoare-agent-a741d3ac7fec35b98.md` per memory rule `feedback_plan_naming.md`).
 >
 > Sister plan to `google_ads_agent_production_readiness_program.md`. That plan defines **what** the 8 stages build. This plan defines **how** Sonnet sub-agents execute those 8 stages with self-test + self-correct, with all state in Plane, with no manual Opus per-task work.
