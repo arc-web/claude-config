@@ -146,28 +146,47 @@ Run: [single command to orient]
 - Commit + push
 - Acceptance: GitHub renders STACKPACK.md cleanly, pricing matches live site, no founding lingo, no booking-tool references
 
-### COMM-20 - Facebook content cadence + automation (downgraded per gap 7)
-**Phase A - Feasibility check (required first):**
-- Verify Meta Graph API publishing to Facebook Groups status as of 2026-05
-- Reference: Meta deprecated Groups posting via Graph API for non-Workplace apps in v19+ (most third-party tooling cannot post to Groups now)
-- Decision tree:
-  - If API publish supported with manageable scopes/app review → proceed to Phase B (automation)
-  - If not → fall back to manual cadence (Phase C)
+### COMM-20 - Facebook content cadence via GoHighLevel Social Planner API
 
-**Phase B - Automation (only if feasible):**
-- Skool RSS → n8n → Graph API Group post
-- FB Page token in OpenBao at `secret/shared/facebook-graph-token`
-- Required scopes: `pages_manage_posts`, `pages_read_engagement`, plus Group admin app + Workplace context if applicable
+**Path chosen:** GHL Social Planner API (verified 2026-05). GHL exposes FB Groups as first-class destination, not a toggle on Page posts. Skips Meta Graph API deprecation pain entirely.
 
-**Phase C - Manual fallback (default unless feasibility passes):**
-- Draft 12-week calendar in Plane page under COMM (3 post types: Highlight / Teardown teaser / Question thread)
-- Schedule via Meta Business Suite Planner (manual scheduled posts, no automation needed)
-- Mike or Oliver owns weekly publish
+**Prerequisites:**
+1. StackPack FB Page exists (or create one) - posts publish to Group as the linked Page identity
+2. Mike or Oliver has admin role on the FB Group
+3. "Lead Connector" app authorized as a Facebook app for the Group (one-time, inside FB Group settings)
+4. GHL plan with API access ($297+ Pro/Agency tier) on a location available for StackPack
 
-- Acceptance:
-  - Feasibility writeup committed to issue description before any automation work
-  - If Phase B: n8n flow live + tested, first cross-post visible
-  - If Phase C: 12-week calendar drafted, Meta Business Suite Planner has at least 4 weeks queued, FB welcome post pinned
+**Setup (one-time):**
+1. In FB: create/confirm StackPack Page, link Group to Page (More → Link Group)
+2. In FB Group settings: add Lead Connector as authorized app
+3. In GHL location → Social Planner → Settings → "Connect a new Facebook Group and Page" → authorize and select StackPack Group
+4. Retrieve `accountId` for the Group via `GET /social-planner/get-facebook-page-group/` (locationId scoped)
+5. Store `accountId` + `locationId` in OpenBao at `secret/shared/stackpack-ghl-social-planner` (fields `location_id`, `fb_group_account_id`, `fb_page_account_id`)
+
+**Automation flow:**
+- Python script (or n8n) loops over content calendar entries
+- Calls `POST /social-media-posting/{locationId}/posts` with body containing both `accountId` values (Page + Group) in destinations + scheduledAt timestamp
+- Respects 10 req / 10s rate limit (sleep 1.1s between calls)
+- Bulk-schedule 12 weeks of posts in one run
+
+**Content calendar (Plane page under COMM):**
+- 12 weeks, 3 post types: Highlight, Teardown teaser, Question thread
+- Schedule: Mon 10am ET / Wed 1pm ET / Fri 11am ET
+- First post: pinned welcome linking Skool community
+
+**Risks logged in description:**
+- GHL Social Planner abstracts Meta Graph API - if Meta breaks Groups posting upstream, our flow breaks too. GHL has historically updated within days.
+- Group posts identify as the linked Page, not as Mike or Oliver personally. Acceptable for brand voice.
+- Rate limits per location: 10 req / 10s. Bulk scheduling of 36 posts (12 weeks × 3) finishes in ~10s with mandated sleep.
+
+**Acceptance:**
+- StackPack FB Page exists + Group linked to it
+- Lead Connector authorized as Group app
+- GHL location has both Page + Group connected (verified via `get-facebook-page-group` returning both `accountId`s)
+- 12-week content calendar drafted in Plane page
+- Python automation script committed to `~/ai/clients/stackpack-site/scripts/ghl_social_scheduler.py` (or chosen location)
+- First batch of 4 weeks scheduled in GHL (visible in GHL Social Planner UI + retrievable via `posts/list` API)
+- First scheduled post lands successfully in both Page + Group at scheduled time
 
 ### COMM-21 - Skool workshop calendar (8 weeks)
 - 8 topics, 1 per Tue or Fri, mapped to 5 pillars:
