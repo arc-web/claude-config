@@ -58,6 +58,7 @@
 - [Verify before regurgitating memory](feedback_verify_before_regurgitating_memory.md) - external state in memory is a hypothesis; fact-check live API/CLI/file before citing; user contradiction = update memory same turn
 - [Memory writes stay local by default](feedback_memory_local_only.md) - never write to VPS/remote memory stores without explicit user approval; auto-memory primary, ctx_knowledge on-request only
 - [Audit auto-execute confidence threshold](feedback_audit_auto_execute_confidence.md) - auto-A when claims pass; only queue for user on failures, purges, or credential files
+- [arc-browser GHL friction 2026-05-19](failure_arc_browser_2026-05-19.md) - StackPack GHL PIT flow forced building site_registry + google_sso flow + ghl_* tools + agentic_browser_prompt + manual-fallback protocol; P1 shipped, P2-P4 queued under COMM-35
 
 ## Projects (Google Ads)
 
