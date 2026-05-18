@@ -19,6 +19,15 @@ Issues live on the project, scoped to the client via module assignment.
 - MOON = `8a64261f-f129-4e67-8976-b3b116cf54d4`
 - TMPL = `b7c7c9d8-2be5-44be-ad0d-3682f14ef905`
 
+**ARC project modules (verified live 2026-05-18):**
+- AiBrainBuilders (ARC) = `0059233e-b1de-4ea3-a84e-d16c99b9b1ba`
+- TheraPPC = `5bb36ae6-501b-4104-b97a-46f34802280a`
+- CollabMedSpa (ARC) = `4aa76c96-06cf-4485-87db-f70881d6ce1c`
+- ProximaHire (ARC) = `6a4735c8-dd4f-41c4-8081-85566c136bca`
+- FDLXibalba (ARC) = `f8c5623a-a4a0-4ee6-97c1-5535331178ec`
+- AdvertisingReportCard (ARC) = `793c48d8-3330-4b21-b2af-085432c4dced`
+- SFBayAreaMoving (ARC) = `0109579c-3ed0-4443-9d5c-5d14171df9ea`
+
 **Example (live):**
 - clients workspace → ARC project → TheraPPC module → ARC-1 through ARC-8
 

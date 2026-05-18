@@ -126,25 +126,12 @@ Get UUID by querying issues list and extracting `.id` per result.
 
 All clients projects share same 9-state pattern (Backlog/Todo/InProgress/NeedsApproval/Approved/Blocked/Done/Completed/Cancelled). Full state UUIDs per project in `arc-web/plane-pm-agent/API.md`.
 
-## Multi-issue Python pattern (shell functions break with lean-ctx hook)
+## Python pattern
 
-```python
-import subprocess, json
-root = subprocess.check_output(
-    ['op','item','get','hl23px33remaz2xecl5ecvvaem','--vault','ARC','--reveal','--fields','root_token'],
-    text=True).strip()
-key = subprocess.check_output(
-    ['ssh','zeroclaw',
-     f"VAULT_ADDR='http://127.0.0.1:8200' BAO_TOKEN='{root}' bao kv get -field=value secret/shared/plane-api-key"],
-    text=True).strip()
-PROJECT = '0e399778-93d9-4a95-ba2f-755990dd69bc'
-BASE = f'https://arc.todovibes.com/api/v1/workspaces/todovibes/projects/{PROJECT}/issues/'
-HEADERS = ['-H',f'X-API-Key: {key}','-H','User-Agent: plane-cli/1.0','-H','Content-Type: application/json']
-r = subprocess.check_output(['curl','-s','-X','POST',*HEADERS,'-d',json.dumps(payload),BASE], text=True)
-```
+Use OpenBao AppRole (not root token). Full pattern with key retrieval: `~/.claude/skills/plane-pm/SKILL.md`.
+Raw API pattern: `arc-web/plane-pm-agent/API.md` (Python raw API pattern section).
 
 Run via `/opt/homebrew/bin/python3 -c "..."` with `dangerouslyDisableSandbox: true`.
-Full skill: `~/.claude/skills/plane-pm/SKILL.md`
 
 ## Admin operations (API limitations)
 
