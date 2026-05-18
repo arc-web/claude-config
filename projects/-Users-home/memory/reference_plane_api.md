@@ -83,6 +83,16 @@ PATCH /projects/<UUID>/issues/<issue-uuid>/
 
 Get UUID by querying issues list and extracting `.id` per result.
 
+## Issue field types
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `state` | UUID string | From `/states/` - never hardcode across projects |
+| `estimate_point` | UUID string | NOT an integer - fetch from `/projects/<UUID>/estimates/` |
+| `priority` | string | `none` `urgent` `high` `medium` `low` |
+| `sequence_id` | integer | Display-only (e.g. AGENT-197) - never use in PATCH URLs |
+| `.id` | UUID string | Use this in all PATCH/DELETE URLs |
+
 ## AGENT project state IDs (todovibes)
 
 | State | UUID |

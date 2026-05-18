@@ -151,17 +151,42 @@ Run: [single command to orient]
 **Path chosen:** GHL Social Planner API (verified 2026-05). GHL exposes FB Groups as first-class destination, not a toggle on Page posts. Skips Meta Graph API deprecation pain entirely.
 
 **Prerequisites:**
-1. StackPack FB Page exists (or create one) - posts publish to Group as the linked Page identity
+1. StackPack FB Page exists ✅ (user confirmed) - Group will be linked to it
 2. Mike or Oliver has admin role on the FB Group
 3. "Lead Connector" app authorized as a Facebook app for the Group (one-time, inside FB Group settings)
-4. GHL plan with API access ($297+ Pro/Agency tier) on a location available for StackPack
+4. GHL plan with API access ($297+ Pro/Agency tier) on the StackPack sub-account
 
-**Setup (one-time):**
-1. In FB: create/confirm StackPack Page, link Group to Page (More → Link Group)
-2. In FB Group settings: add Lead Connector as authorized app
-3. In GHL location → Social Planner → Settings → "Connect a new Facebook Group and Page" → authorize and select StackPack Group
-4. Retrieve `accountId` for the Group via `GET /social-planner/get-facebook-page-group/` (locationId scoped)
-5. Store `accountId` + `locationId` in OpenBao at `secret/shared/stackpack-ghl-social-planner` (fields `location_id`, `fb_group_account_id`, `fb_page_account_id`)
+**GHL Auth - both modes documented (user request: cover both to avoid future walls):**
+
+*Agency-level (Private Integration Token, Recommended for cross-account scripts):*
+- Issued from Agency Settings → API → Private Integrations
+- Single token, hits any sub-account in the agency
+- Required scopes: `social-media-posting.write`, `social-media-posting.readonly`, `oauth.write`, `oauth.readonly`, `locations.readonly`
+- Store at OpenBao `secret/shared/ghl-agency-pit` field `value`
+- Mirror to 1P ARC vault as item "GoHighLevel - Agency PIT"
+- Used by any agent or script that needs cross-sub-account GHL access (StackPack now, future communities later)
+
+*Sub-account-level OAuth (per-location app, fallback if PIT scopes get restricted):*
+- App created in Developer Marketplace, installed on StackPack sub-account
+- Returns location-scoped `access_token` + `refresh_token`
+- Required scopes: same as above
+- Refresh token rotation handled by a small Python helper, tokens stored at OpenBao `secret/locations/stackpack-ghl` fields `access_token`, `refresh_token`, `expires_at`
+- Used only when agency token can't reach a needed endpoint (rare; some Phase 2 social endpoints may eventually be sub-account-token-only per GHL docs)
+
+*Decision rule for scripts:* prefer agency PIT. Fall back to sub-account OAuth only on 403/scope-denied response, log the endpoint that required it, file ticket in Plane.
+
+**Setup (one-time, in order):**
+1. In FB: confirm StackPack Page, link StackPack Group to Page (Page → More → Link Group → select Group → confirm)
+2. In FB Group settings: add Lead Connector as authorized Facebook app
+3. In GHL Agency: provision/confirm StackPack sub-account (separate from ARC; see "Sub-account choice" below)
+4. In GHL StackPack sub-account → Social Planner → Settings → "Connect a new Facebook Group and Page" → authorize Lead Connector → select StackPack Group + Page
+5. In GHL Agency Settings → API → Private Integrations: create token "StackPack + Communities Automation" with above scopes
+6. Retrieve `accountId`s for Page + Group via `GET /social-media-posting/{locationId}/oauth/facebook/accounts` (or `get-facebook-page-group/` endpoint)
+7. Store credentials in OpenBao:
+   - `secret/shared/ghl-agency-pit` → `value` = PIT
+   - `secret/locations/stackpack-ghl` → `location_id`, `fb_group_account_id`, `fb_page_account_id`
+8. Mirror to 1P ARC vault (item "GoHighLevel - Agency PIT" + item "StackPack GHL Location")
+9. Add memory entry `reference_ghl_api.md` covering: agency vs sub-account auth, PIT scopes, Social Planner endpoints, rate limits, location lookup pattern
 
 **Automation flow:**
 - Python script (or n8n) loops over content calendar entries
@@ -323,11 +348,21 @@ All read-only API calls. No UI assumptions.
 1. ✅ Vault host: `vault.aibrainbuilders.com`
 2. ✅ FB posting: **GoHighLevel Social Planner API** (not Meta Graph API direct, not Meta Business Suite manual). GHL exposes FB Groups as first-class destination.
 
+## Sub-account choice for StackPack (locked per user direction: "cover both")
+
+User decision: document both auth modes regardless. Sub-account dimension still needs picking because GHL Social Planner connections live inside one sub-account, not at agency level.
+
+Options:
+- A) New dedicated StackPack sub-account (clean separation, costs one slot, isolates Social Planner views and analytics)
+- B) Reuse existing ARC sub-account (no new slot, but ARC + StackPack socials mix in one Social Planner)
+- C) Reuse another existing sub-account (e.g. exitstorm) - same tradeoff as B with different mixing
+
+Either way, agency PIT works across all of them.
+
 ## Open questions still needing answer before Phase 5
 
-1. **StackPack FB Page** - does a Facebook Page for StackPack already exist? Required prerequisite for COMM-20 (Group posts identify as the linked Page). If not, creating one is part of COMM-20 setup.
-2. **GHL location for StackPack** - which GHL sub-account/location runs StackPack? New location vs. share an existing ARC location. Affects `locationId` used by API + which agency plan tier funds the API access.
-3. **StackPack Discord state** - does the server exist already, or does COMM-22 include creating it? Determines whether COMM-22 = "collect invite + embed" or "create server + channels + invite".
+1. **GHL sub-account for StackPack social connections** - A / B / C above. Affects `locationId` stored in OpenBao + downstream automation reference.
+2. **StackPack Discord state** - does the server exist already, or does COMM-22 include creating it? Determines whether COMM-22 = "collect invite + embed" or "create server + channels + invite".
 
 ## Plan file naming
 

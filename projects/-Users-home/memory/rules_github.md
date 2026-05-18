@@ -97,3 +97,13 @@ Always use descriptive snake_case/kebab-case filename stating what the plan is a
 - Legitimate active plans with slug names get renamed to their topic.
 - Topic-first: what is the work.
 - If plan tool locks filename, `mv` on disk after the fact, note real name in response.
+
+# Retroactive PR (commit already on main)
+
+When a commit landed on main that should have been a PR:
+
+1. Branch from current main (retains the change): `git checkout -b <branch> && git push -u origin <branch>`
+2. Revert main: `git checkout main && git revert <sha> --no-edit && git push`
+3. Open PR from branch → main and merge normally
+
+Never force-push main. Never cherry-pick to avoid the revert. Branch first, revert second.
