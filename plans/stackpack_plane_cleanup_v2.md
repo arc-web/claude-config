@@ -156,24 +156,31 @@ Run: [single command to orient]
 3. "Lead Connector" app authorized as a Facebook app for the Group (one-time, inside FB Group settings)
 4. GHL plan with API access ($297+ Pro/Agency tier) on the StackPack sub-account
 
-**GHL Auth - both modes documented (user request: cover both to avoid future walls):**
+**GHL Auth - REUSE existing tokens (verified after inventory lap):**
 
-*Agency-level (Private Integration Token, Recommended for cross-account scripts):*
-- Issued from Agency Settings → API → Private Integrations
-- Single token, hits any sub-account in the agency
-- Required scopes: `social-media-posting.write`, `social-media-posting.readonly`, `oauth.write`, `oauth.readonly`, `locations.readonly`
-- Store at OpenBao `secret/shared/ghl-agency-pit` field `value`
-- Mirror to 1P ARC vault as item "GoHighLevel - Agency PIT"
-- Used by any agent or script that needs cross-sub-account GHL access (StackPack now, future communities later)
+Pre-existing infra not to recreate:
+- **PIT in 1P ARC**: `GHL PIT - gohighlevel_mcp` (item `7xqrb7z6m3mpnlrzjdpj6l3efu`) - 1 week old, was created for `gohighlevel_mcp` MCP server. Verify scopes cover Social Planner before reuse; if missing scopes, regenerate at agency level rather than create new.
+- **Agency token in 1P Zeroclaw**: `GHL - DigitalAccessPartner - Agency Token` (item `ydy2he7d4vss5vmadt7ofo3jd4`) - 2 weeks old
+- **Existing GHL tooling**: `~/ai/platforms/ghl-toolkit` (520+ tool MCP server) + `~/ai/platforms/mcp_tools/servers/gohighlevel_mcp` + `~/ai/platforms/GoHighLevel-MCP` + `arc-mcp-server/src/integrations/gohighlevel.js`
+- **Auth skill**: `~/ai/platforms/ghl-toolkit/autocli/skills/ghl-auth` (canonical pattern, follow it)
+- **Workflow skill**: `~/ai/platforms/ghl-toolkit/autocli/skills/ghl-workflow-builder`
 
-*Sub-account-level OAuth (per-location app, fallback if PIT scopes get restricted):*
-- App created in Developer Marketplace, installed on StackPack sub-account
-- Returns location-scoped `access_token` + `refresh_token`
-- Required scopes: same as above
-- Refresh token rotation handled by a small Python helper, tokens stored at OpenBao `secret/locations/stackpack-ghl` fields `access_token`, `refresh_token`, `expires_at`
-- Used only when agency token can't reach a needed endpoint (rare; some Phase 2 social endpoints may eventually be sub-account-token-only per GHL docs)
+Step 1 - verify existing PIT covers Social Planner scopes:
+- Read `~/ai/platforms/ghl-toolkit/autocli/skills/ghl-auth/SKILL.md` to confirm canonical scope list and PIT vs OAuth decision rule
+- Probe `/social-media-posting/{anyExistingLocationId}/posts/list` with current PIT
+- If 200: reuse as-is
+- If 403/scope-denied: extend scopes in agency settings, regenerate, update OpenBao
 
-*Decision rule for scripts:* prefer agency PIT. Fall back to sub-account OAuth only on 403/scope-denied response, log the endpoint that required it, file ticket in Plane.
+Step 2 - store/confirm canonical secret paths:
+- `secret/shared/ghl-agency-pit` field `value` = the PIT (single source of truth across all agents)
+- `secret/locations/stackpack-ghl` fields `location_id`, `fb_group_account_id`, `fb_page_account_id`
+- Both 1P items remain as emergency fallbacks per `credentials_architecture.md`
+
+Step 3 - document both auth modes (user request "cover both to avoid future walls"):
+- Agency PIT = preferred, cross-account
+- Sub-account OAuth = fallback if any endpoint becomes sub-account-token-only
+- Decision rule for scripts: try PIT first, fall back to OAuth refresh-token flow on 403/scope-denied, log the endpoint that required it
+- Memory entry to consolidate: `reference_ghl_api.md` (new) covering canonical PIT location, fallback OAuth pattern, Social Planner endpoint list, rate limits, existing tooling map (`ghl-toolkit`, `gohighlevel_mcp`, etc.)
 
 **Setup (one-time, in order):**
 1. In FB: confirm StackPack Page, link StackPack Group to Page (Page → More → Link Group → select Group → confirm)
@@ -228,13 +235,35 @@ Run: [single command to orient]
 - Post to Skool calendar with Zoom or Riverside link
 - Acceptance: 8 calendar entries with owner/time/description; first workshop pinned in Skool feed
 
-### COMM-22 - Stand up public StackPack Discord server + invite link
-- Create StackPack Discord server (if not already provisioned) or confirm existing
-- Default channel layout: `#welcome`, `#intros`, `#announcements`, `#general`, `#strategy`, `#build`, `#ads`, `#ai-and-mcp`, `#office-hours`
-- Generate permanent invite link (no expiry, unlimited uses)
-- Store invite URL: OpenBao `secret/shared/stackpack-discord-invite` field `value`
-- Embed invite in: stackpack.app footer, Skool yearly welcome thread, FB pinned post
-- Acceptance: server live, invite valid, 3 surfaces show invite link; gated/role provisioning explicitly deferred
+### COMM-22 - Embed StackPack Discord invite (server already exists)
+
+**Reality check (after full inventory lap):** StackPack Discord is LIVE.
+- Guild ID: `1392196836378542162`
+- Bot: `StackPack.app` (id `1492471281319415949`)
+- 20 members (16 human as of 2026-04-11), 14+ channels organized COMMUNITY / BUILDS & AGENTS / TOOLS / AGEX
+- Bot token already at OpenBao `secret/shared/discord-stackpack`, 1P fallback `Discord Bot Token - StackPack.app`
+- Soul/voice doc at `~/ai/agents/comms/discord_agent/souls/stackpack_soul.md`
+- discord_agent CLI fully wired: `discord.sh -s stackpack`, `community_ops.py --server stackpack`, `discord_report.py --server stackpack`
+
+**Concrete launch scope (narrowed):**
+- Generate permanent invite link from `#general` channel (or pick a welcome channel) via `discord_api.py` or Discord UI
+- Store invite URL at OpenBao `secret/shared/stackpack-discord-invite` field `value` + mirror to 1P ARC
+- Embed invite in 3 surfaces:
+  - `stackpack.app` footer (edit `~/ai/clients/stackpack-site/website_v3/src/index.html`, redeploy via cf-deploy)
+  - Skool yearly welcome thread
+  - FB group pinned post
+- Optional polish: confirm `#welcome` or `#intros` is set as the landing channel for new invitees
+- Optional polish: rename or tweak channels to match new public marketing message if needed (use `community_ops.py channels rename --server stackpack`)
+
+**Out of scope (deferred):**
+- New channels - existing structure is sufficient
+- Role-based gating - public invite is fine until volume warrants
+- Skool → Discord webhook role provisioning
+
+**Acceptance:**
+- Permanent invite URL stored at OpenBao + 1P
+- Invite live in 3 surfaces (footer, Skool, FB)
+- New visitor can click invite → land in StackPack server with default-channel access
 
 ### COMM-23 - Document Discord DM flow for yearly 1-on-1s
 - Skool yearly welcome thread: "Yearly member? DM @mike or @oliver on Discord with 3 lines: your stack, your biggest blocker, your desired outcome from 30 min."
