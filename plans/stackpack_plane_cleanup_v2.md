@@ -318,11 +318,16 @@ All read-only API calls. No UI assumptions.
 3. Booking: none, Discord DM only
 4. 301 banner: skip, social posts only
 
-## Open questions (need answer before Phase 5)
+## User-confirmed inputs round 2 (2026-05-18)
 
-1. **vault host** - `vault.todovibes.com` failed DNS last run. Memory says canonical is now `vault.aibrainbuilders.com`. Confirm which is live? Plan defaults to `vault.aibrainbuilders.com` per latest memory entry.
-2. **FB Group API feasibility** - require explicit confirm/deny on whether Mike/Oliver have prior Meta app approval for Groups posting. If unknown, default to Phase C manual fallback for COMM-20.
-3. **Discord server provisioned?** - Does StackPack Discord already exist? Plan branches: confirm + skin vs. create from scratch.
+1. ✅ Vault host: `vault.aibrainbuilders.com`
+2. ✅ FB posting: **GoHighLevel Social Planner API** (not Meta Graph API direct, not Meta Business Suite manual). GHL exposes FB Groups as first-class destination.
+
+## Open questions still needing answer before Phase 5
+
+1. **StackPack FB Page** - does a Facebook Page for StackPack already exist? Required prerequisite for COMM-20 (Group posts identify as the linked Page). If not, creating one is part of COMM-20 setup.
+2. **GHL location for StackPack** - which GHL sub-account/location runs StackPack? New location vs. share an existing ARC location. Affects `locationId` used by API + which agency plan tier funds the API access.
+3. **StackPack Discord state** - does the server exist already, or does COMM-22 include creating it? Determines whether COMM-22 = "collect invite + embed" or "create server + channels + invite".
 
 ## Plan file naming
 
