@@ -38,7 +38,17 @@ Plane self-hosted on zeroclaw VPS at `arc.todovibes.com`. Postgres in `plane-pla
 - Per-community ops/dev tasks → issue with `module_ids: [<module_id>]`
 - Cross-community shared work → issue without module link, lives at COMM project root
 
+**Clients workspace project UUIDs (verified live 2026-05-18):**
+- TMPL = `b7c7c9d8-2be5-44be-ad0d-3682f14ef905`
+- BLPX = `23228989-849b-418a-b344-9a7c565d5ad1`
+- BLGR = `2ccf605e-6474-4df4-95da-76a70121f387`
+- MOON = `8a64261f-f129-4e67-8976-b3b116cf54d4`
+- ARC = `e05a2d3e-502f-4b5a-bac5-8ce189e41b21`
+
+Full state UUIDs per clients project: `arc-web/plane-pm-agent/API.md`
+
 **API gotchas:**
-- CLI hardcoded `PLANE_WORKSPACE=todovibes`, no workspace switching - use raw API for clients workspace
+- CLI supports `PLANE_WORKSPACE=clients` to switch workspace (now works with `plane projects`, `plane issues`, `plane new`)
 - Root token at 1P ARC item `hl23px33remaz2xecl5ecvvaem` field `root_token` - VALID as of 2026-05-06 (root policy, no TTL). See agent_credential_map.md for authoritative credential state.
-- Plane CLI cache (`~/.cache/plane/*`) ignores PLANE_WORKSPACE env override - cache key not per-workspace
+- Plane CLI cache (`~/.cache/plane/*`) is per-workspace via env var - switching workspace = cache miss (expected)
+- State UUIDs differ per project - never hardcode across projects

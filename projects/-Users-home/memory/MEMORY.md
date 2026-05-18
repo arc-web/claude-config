@@ -86,7 +86,7 @@
 - [arc-web GitHub org structure](reference_arc_web_structure.md) - central repo structure, each repo is one project
 - [Infrastructure](reference_infrastructure.md) - VPS Alpha (Hostinger #1, 187.77.222.191), model config, agents dir, path boundaries
 - [Discord access and tools](reference_discord.md) - discord_agent CLI at ~/ai/agents/comms/discord_agent/; ARC bot.env is STALE (StackPack-only token); use Charlie bot (1P Zeroclaw 5elrtua2364vr2oogwqp4wch5q field discord_token) for ARC reads; discord.sh read crashes silently on API errors
-- [Plane API quick reference](reference_plane_api.md) - arc.todovibes.com; key=op item get x7qhfdaos76fcymuztjjscmrpa --vault Zeroclaw --reveal --fields credential; project UUIDs; state_detail=null (fetch /states/ separately); User-Agent required
+- [Plane API quick reference](reference_plane_api.md) - canonical ref: arc-web/plane-pm-agent/API.md; all 12 AGENT states (Done=bc0f8045, Completed=9bafcd6c); clients workspace UUIDs (TMPL/BLPX/BLGR/MOON/ARC); field types; endpoints
 - [Discord agent naming aliases](reference_discord_agent_naming.md) - discord_agent / discord-agent / discord_manager / discord-manager / "discord agent" / "discord manager" all = same entity; canonical = discord_agent
 - [FlareSolverr proxy](reference_flaresolverr.md) - Cloudflare-bypass proxy on VPS Alpha; integrated into arc-browser 2026-05-01 (flaresolverr.py + cf_recovery.py, commit bf3f53e)
 - [ARC Browser](reference_arc_browser.md) - stealth browser automation MCP (21 tools, public repo, Camofox Firefox sidecar via PR #3), formerly "ghost-browser"

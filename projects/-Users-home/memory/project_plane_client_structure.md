@@ -12,9 +12,18 @@ Client work in Plane follows a 3-level hierarchy:
 
 Issues live on the project, scoped to the client via module assignment.
 
+**Project UUIDs (verified live 2026-05-18):**
+- ARC = `e05a2d3e-502f-4b5a-bac5-8ce189e41b21`
+- BLPX = `23228989-849b-418a-b344-9a7c565d5ad1`
+- BLGR = `2ccf605e-6474-4df4-95da-76a70121f387`
+- MOON = `8a64261f-f129-4e67-8976-b3b116cf54d4`
+- TMPL = `b7c7c9d8-2be5-44be-ad0d-3682f14ef905`
+
 **Example (live):**
 - clients workspace → ARC project → TheraPPC module → ARC-1 through ARC-8
 
 **Why:** Multiple clients may fall under the same agency division/owner. Project = the operator. Module = the client engagement.
 
-**How to apply:** When creating client work tasks, always assign to the correct project (business division) AND link to the client's module. If client module doesn't exist yet, create it first.
+**How to apply:** When creating client work tasks, always assign to the correct project (business division) AND link to the client's module. If client module doesn't exist yet, create it first. Use `plane new PROJ "title" --module ClientName` or raw API with `module_ids`.
+
+Full state UUIDs per project: `arc-web/plane-pm-agent/API.md`.

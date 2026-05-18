@@ -4,7 +4,9 @@ description: Plane CE at arc.todovibes.com - API key retrieval, project UUIDs, c
 type: reference
 originSessionId: b615afa1-6455-4b6f-a95b-ec9b51a07953
 ---
-# Plane API Quick Reference (verified 2026-05-16)
+# Plane API Quick Reference (verified 2026-05-18)
+
+**Canonical reference:** `arc-web/plane-pm-agent/API.md` — all UUIDs, both workspaces, all endpoints, field types.
 
 ## Key retrieval - OpenBao direct (updated 2026-05-18)
 
@@ -93,14 +95,36 @@ Get UUID by querying issues list and extracting `.id` per result.
 | `sequence_id` | integer | Display-only (e.g. AGENT-197) - never use in PATCH URLs |
 | `.id` | UUID string | Use this in all PATCH/DELETE URLs |
 
-## AGENT project state IDs (todovibes)
+## AGENT project state IDs (todovibes, all 12, verified 2026-05-18)
 
-| State | UUID |
-|-------|------|
-| Todo | `c0528a48-cbb1-44e5-9f09-1e8fc566bb56` |
-| In Progress | `bdb50dbe-2fe8-4f65-848c-1439cfa64ad5` |
-| Done | `9bafcd6c-f951-4b88-8c49-f8ef2875bc9a` |
-| Blocked | `ce62803d-b9cc-4214-b99d-823d8afff7c8` |
+| State | UUID | Group |
+|-------|------|-------|
+| Backlog | `9826ce13-5a13-4f17-a768-f90391a58682` | backlog |
+| Todo | `c0528a48-cbb1-44e5-9f09-1e8fc566bb56` | unstarted |
+| Scoped | `03e84cf3-ac77-4404-ae25-63130f25a1a4` | unstarted |
+| Assigned | `8aae6cbf-5e23-4f1c-a041-1ab52268b9f8` | unstarted |
+| In Progress | `bdb50dbe-2fe8-4f65-848c-1439cfa64ad5` | started |
+| Needs Approval | `57f31d08-a350-4f49-bd50-3d2865858fda` | started |
+| Approved | `275036cd-7aaf-4041-854b-364914356372` | started |
+| Blocked | `ce62803d-b9cc-4214-b99d-823d8afff7c8` | started |
+| Done | `bc0f8045-bfe1-4cef-99f0-e238a1956c73` | completed |
+| Completed | `9bafcd6c-f951-4b88-8c49-f8ef2875bc9a` | completed |
+| Cancelled | `f881cda3-8583-4110-91ab-a1032dca44b7` | cancelled |
+| Archived | `4d9fe922-38ba-4bae-8794-014c38b4f36f` | cancelled |
+
+**Fix:** Prior docs had Done = `9bafcd6c` which is actually "Completed". Real Done = `bc0f8045`.
+
+## clients workspace - project UUIDs (verified 2026-05-18)
+
+| Identifier | UUID | Name |
+|-----------|------|------|
+| TMPL | `b7c7c9d8-2be5-44be-ad0d-3682f14ef905` | Templates |
+| BLPX | `23228989-849b-418a-b344-9a7c565d5ad1` | BluePixel |
+| BLGR | `2ccf605e-6474-4df4-95da-76a70121f387` | BlueGorilla |
+| MOON | `8a64261f-f129-4e67-8976-b3b116cf54d4` | Moonraker |
+| ARC | `e05a2d3e-502f-4b5a-bac5-8ce189e41b21` | ARC |
+
+All clients projects share same 9-state pattern (Backlog/Todo/InProgress/NeedsApproval/Approved/Blocked/Done/Completed/Cancelled). Full state UUIDs per project in `arc-web/plane-pm-agent/API.md`.
 
 ## Multi-issue Python pattern (shell functions break with lean-ctx hook)
 

@@ -24,21 +24,23 @@ Example: human spends 5 minutes reviewing a plan and saying "go" → agent runs 
 
 ---
 
-## Handoff prompt (required on every task)
+## Handoff prompt (Agent Intake Prompt - required on every task)
 
-Every task must include a handoff prompt in the description - a ready-to-paste block another agent or team member can use to pick up exactly where the last person left off.
+Every task description must include an Agent Intake Prompt. Canonical format = 8 sections from `task_intake.py:REQUIRED_SECTIONS`. Use `plane intake <ref>` to refresh.
 
-**Format:**
-```
-## Handoff prompt
-Context: [what this task is, what's been done, what's left]
-Repo/path: [where the code or files live]
-Last state: [what was last completed or changed]
-Next action: [exact first step to continue]
-Run: [any command needed to get oriented - e.g. cd path && git log --oneline -5]
-```
+**Required sections (in order):**
+1. Repo or system path
+2. Current state
+3. Overview
+4. Files, services, commands, or artifacts to inspect
+5. Decisions needed
+6. Next steps
+7. Verification commands
+8. Definition of done
 
-If a task is missing its handoff prompt: analyze the task name, description, and comments, then add the prompt. Do not skip this.
+`plane new` generates this automatically. `plane intake PROJ-X` refreshes it on any existing issue.
+
+If a task is missing its handoff prompt: run `plane intake <ref>` or manually add the 8-section block. Do not skip this.
 
 ## Last-updated attribution (required on every comment and update)
 
