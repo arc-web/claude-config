@@ -130,17 +130,18 @@ Add three subcommands to `plane`:
 
 Reuse existing `api()`, `paginate()`, `resolve_proj()`, `find_issue()`. Pattern matches existing `cmd_new`, `cmd_move`.
 
-### Phase 2 - Recommendation engine (~3 hours)
+### Phase 2 - Recommendation engine (action-driven slicing)
 
-New subcommand `plane cycle recommend [<project>]`:
-- Pull all issues created in last 48h via `created_at` filter.
-- Group by module + parent + label clusters.
-- For each cluster >=3 issues, compute:
-  - Total time estimate (sum of `human minutes` parsed from descriptions)
-  - Active cycle overlap (theme keyword match)
-  - Active cycle capacity
-- Emit JSON or table: cluster_id, suggested_action (attach/create), target_cycle_name, target_dates, issue_refs.
-- DOES NOT execute. Prints suggestion + ready-to-paste `plane cycle new` + `plane cycle attach` commands.
+New subcommand `plane cycle recommend [<project>] [--module M] [--parent UUID]`:
+- Pull batch: all issues created in last 48h, or filtered by --module / --parent.
+- Build dependency graph by parsing description "depends on" hints + parent relationships + "after Bn" patterns.
+- Output 4 options (mirrors AskUserQuestion shape):
+  1. **Minimum unblock**: smallest leaf-set whose completion unblocks N other leaves. Compute via topo-sort.
+  2. **Maximum parallel**: all leaves with no upstream dependency.
+  3. **Single coherent outcome**: largest sub-epic / parent cluster fully buildable end-to-end.
+  4. **Give feedback / revise**: prompt user for custom slicing.
+- Each option emits: suggested cycle name, issue refs, dependency note, sum of time-estimates.
+- DOES NOT execute. Prints recommendations + ready-to-paste `plane cycle new` + `plane cycle attach` commands for each option.
 
 ### Phase 3 - Agent rule (memory + skill)
 
@@ -176,11 +177,37 @@ After Phase 1-4 execute:
 
 ---
 
-## Decisions needed before execute
+## Decisions confirmed (post-clarification)
 
-- Cycle cadence preference: weekly (matches existing "Week of ..." cycles) or 2-week sprints (matches "Sprint 1") - **default to weekly** unless overridden
-- Cycle naming convention: `<Module> Week N - YYYY-MM-DD` or freeform - **default to module+week**
-- Recommendation auto-run cadence: every batch-create (verbose) or only when user asks (`plane cycle recommend`) - **default to user-on-demand**, agent surfaces a single one-line hint after batch creation
+- **Cadence is action-driven, not time-driven.** Agents run 24/7. Days turn to minutes. Cycles close on completion, not on calendar. Time still belongs to humans (stakeholder deadlines), but cycle SIZE is "what the agents can ship in one coherent push" not "one week of human work." Reject the weekly/biweekly framing entirely.
+- **Cycle = deliverable batch.** Dates exist only as outer bounds tied to real deadlines. Default start_date=today, end_date=today+14d (a safety ceiling, not a target). Cycle closes the moment scope hits 100%.
+- **Recommendation = 4-option pattern.** When agent detects a batch worth cycling, surface 3 concrete recommended cycle-shapes (different batch slicings) plus a 4th "Give feedback / revise" option. Mirrors AskUserQuestion shape.
+- **Apply current 42-issue batch.** Don't pick 6 for a "week." Slice by dependency: produce 3 cycle-shape options and let user pick.
+- **Build Phases 1-4 in this session.**
+
+## Reframe - action-driven cycles
+
+A cycle is now a closed batch of issues that agents commit to shipping next, sized by:
+- Dependency clusters (issues that unlock each other)
+- Parallelizable streams (no blocking chains)
+- Deliverable coherence (one cycle = one shippable outcome)
+
+Not sized by calendar week.
+
+### Three cycle-shape options the agent should generate for ANY batch >= 3 issues
+
+The agent emits these as a 4-option chooser (3 specific + 1 feedback):
+
+- **Option 1: Minimum unblock.** Smallest set that unblocks the rest. (For OpenBao: B1 audit + F4 close + C6 INFRA-145 coord. Unblocks B2, C7, downstream doc work.)
+- **Option 2: Maximum parallel.** All issues with no upstream dependency. Agents fan out. (For OpenBao: B1, E6, F1, F2, F3, F4, F5, C6 - 8 parallel-safe leaves.)
+- **Option 3: Single coherent outcome.** One sub-epic end-to-end. (For OpenBao: all of sub-epic A = A1..A6, ships the per-task token primitive complete.)
+- **Option 4: Give feedback / revise.** Free-form input to reshape.
+
+Each option lists: cycle name, issue refs, total time estimate, dependency graph note.
+
+## Note on skill routing
+
+CLAUDE.md was updated mid-session to add a domain rule: "Meaningful dev work (build, fix, refactor, deploy, ship, PR, merge, new repo) -> read `~/.claude/skills/agentic-dev-plan/SKILL.md`". This plan IS meaningful dev work (Plane CLI extension + memory rule + cycle creation). Read that skill before Phase 1 execution.
 
 ---
 
