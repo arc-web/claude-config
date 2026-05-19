@@ -11,11 +11,32 @@ originSessionId: e07aa1d2-0550-414d-b021-83d1aeb9f1b1
 - **MCP name**: `arc-browser` (was `ghost-browser` before 2026-04-19 rename)
 - **Server**: `python3 /Users/home/ai/tools/browser/arc-browser/arc_browser/server.py`
 
-## State (verified 2026-05-01)
+## State (verified 2026-05-20)
 
-- PR #3 merged: Camofox stealth Firefox sidecar integration. PR #2 CLOSED ("chore: remove stale google_ads docs moved to ppc vertical" - verified 2026-05-01; no open PRs).
-- Latest main HEAD includes `arc_browser/camofox.py` + 2 new MCP tools (`browser_camofox_health`, `browser_camofox_view`).
-- 21 MCP tools (server.py @mcp.tool decorators): autonomous + primitive + auth + Skool + Camofox.
+- Last push 2026-05-18. Default branch `main`. PUBLIC.
+- PR #4 MERGED 2026-05-18 (MCP startup + OAuth handoff fix). PR #5 OPEN (GHL site profile, google_sso, PIT macros, manual-fallback protocol) - GHL tools already in main, PR #5 is documentation/cleanup.
+- PR #3 MERGED 2026-05-01: Camofox stealth Firefox sidecar. PR #1 MERGED 2026-04-14: v2 generic primitives.
+- 31 MCP tools (was 21 on 2026-05-01; +10 between then and 2026-05-19 main).
+
+## Tool inventory (31 total, verified 2026-05-20)
+
+Generic browser primitives (11): `browser_navigate`, `browser_screenshot`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_evaluate`, `browser_wait`, `browser_analyze_site`, `browser_preflight`, `browser_introspect`, `browser_plan_action`.
+
+Auth + session (4): `browser_auto_login`, `browser_verify_auth`, `browser_task`, `browser_task_confirmed` (CDP-required for LinkedIn/Twitter/Facebook).
+
+Camofox stealth fallback (2): `browser_camofox_health`, `browser_camofox_view`.
+
+Google Cloud OAuth (3): `browser_google_cloud_prepare_oauth`, `browser_google_cloud_status`, `browser_google_cloud_resume`.
+
+Skool (4 - READ/AUTH only, NO post/comment): `skool_auth_refresh`, `skool_verify_session`, `skool_scan`, `skool_onboard`. To post in Skool, drive browser_navigate + browser_click + browser_type manually.
+
+GoHighLevel (6, shipped 2026-05-19): `ghl_auth_refresh`, `ghl_verify_session`, `ghl_create_pit`, `ghl_list_pits`, `ghl_switch_view`, `ghl_switch_subaccount`.
+
+Manual fallback (1): `agentic_browser_send_prompt` - posts to `#agentic-browser` Discord channel, waits for human reply. Use when autonomous flow blocked.
+
+## Defunct skool_agent
+
+`~/ai/agents/.../skool_agent` no longer exists. All Skool functionality absorbed into arc-browser MCP tools above. If user mentions "skool_agent", route to arc-browser.
 
 ## Tree
 

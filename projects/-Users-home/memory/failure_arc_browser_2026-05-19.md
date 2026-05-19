@@ -38,6 +38,7 @@ User asked arc-browser to autonomously create a GoHighLevel agency PIT for Stack
 - `python -m arc_browser.server` registers 31 tools (was 24); all 7 new ones surface in `list_tools`
 - Module-level import clean (no missing symbols, no syntax errors)
 - Tools wire correctly to underlying helpers in `browser.py`
+- Re-verified 2026-05-20: still 31 tools in `main` (commit dbd53a1, push 2026-05-18). PR #5 OPEN but GHL tools already in main - PR #5 carries doc cleanup + manual-fallback protocol metadata, not new tools.
 
 ## Not yet verified (next session)
 
