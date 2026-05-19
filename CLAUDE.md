@@ -35,6 +35,7 @@ CLAUDE.md stays small. Task matches domain - Read target file once at start.
 | Credentials work (1P, Infisical, OpenBao, SSH keys, API tokens) | `~/.claude/skills/credentials/SKILL.md` |
 | Deep linking / navigating the user to a URL | `~/.claude/skills/deep-link/SKILL.md` |
 | New agent/app/tool scaffolding | `~/.claude/skills/scaffold-rule/SKILL.md` |
+| Meaningful dev work (build, fix, refactor, deploy, ship, PR, merge, new repo) | `~/.claude/skills/agentic-dev-plan/SKILL.md` |
 | API integration (new client, new MCP, new workflow) | `~/.claude/skills/api-integration/SKILL.md` |
 | GitHub PR creation, branch strategy, commit trailers | `~/.claude/skills/github-pr-flow/SKILL.md` |
 | GitHub repo discovery (is it public, where does it live) | `~/.claude/skills/gh-find/SKILL.md` |
