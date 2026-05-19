@@ -154,11 +154,11 @@ Single sed pass per file:
 4. Re-fetch Discord message `1506372806890225864`, confirm new labels.
 5. INTERNALOPS-376 has closing comment with sweep summary.
 
-## Open questions
+## Decisions confirmed
 
-- Do you want the historical references in `openbao_blind_spot_task_tree.md` (AGENT-225/226/227/229/230/303 marked Cancelled) rewritten in place, or kept as historical quotes with `[now INTERNALOPS-XX]` parenthetical?
-- Discord message - edit in place or post a follow-up note? Edit-in-place is invisible (no notification); follow-up draws Johan's attention to the rename.
-- Should INTERNALOPS-376 (the arc-browser memory audit lifecycle issue) get a parent linking to a new INTERNALOPS lifecycle epic, or stay flat?
+- **Historical refs: annotate only.** Cancelled task refs (AGENT-225/226/227/229/230/303 etc.) stay in their original quoted form; add `[now INTERNALOPS-225]` parenthetical inline where context is unclear. Preserves the rename breadcrumb.
+- **Discord: edit in place only, silent.** No follow-up notification. Johan reads corrected text next time he opens the channel.
+- **Lifecycle issues: flat.** No epic for memory/hygiene audits. INTERNALOPS-376 stays orphan; future audits same.
 
 ## Done / Open / Recommend
 
