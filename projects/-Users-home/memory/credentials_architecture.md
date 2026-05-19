@@ -1,6 +1,6 @@
 ---
 name: Credentials architecture - consolidated
-description: Single source for credential rules. OpenBao canonical for runtime/services; 1Password local-only for account logins + dev workstation; .env files banned. Includes VPS agent flow, AppRole + proxy, local SSH-fetch, LaunchAgent op-token injection, and safe patterns.
+description: Single source for credential rules. OpenBao canonical for runtime/services; 1Password is human custody, backup, bootstrap, recovery, manual handoff, and new-credential capture. .env files are not runtime credential stores. Includes VPS agent flow, AppRole + proxy, local fetch patterns, biometric 1Password handling, and safe patterns.
 type: project
 originSessionId: 543d8aad-b206-4ecd-88b5-ed0a28587e95
 ---
@@ -8,7 +8,7 @@ originSessionId: 543d8aad-b206-4ecd-88b5-ed0a28587e95
 
 ## QUICK REFERENCE - read first
 
-- **OpenBao root token (for writes/policies):** 1P ARC vault, item `hl23px33remaz2xecl5ecvvaem` ("OpenBao Unseal Material — ARC"), field `root_token`. Also has `unseal_key`, `bao_addr`, `bao_addr_container`.
+- **OpenBao root token (for writes/policies):** 1P ARC vault, item `hl23px33remaz2xecl5ecvvaem` ("OpenBao Unseal Material - ARC"), field `root_token`. Also has `unseal_key`, `bao_addr`, `bao_addr_container`.
 - **AppRole backups:** 1P ARC items prefixed `OpenBao AppRole - <name>` (hermes, zeroclaw-alpha, zeroclaw-bravo, host-scripts, paperclip, fathom, approval-webhook).
 - **Per-container AppRole on zeroclaw:** `/etc/openbao/<container>/{role_id,secret_id,agent.hcl}` for hermes, zeroclaw-alpha, zeroclaw-bravo.
 - **Per-host AppRole env files on zeroclaw:** `/etc/openbao/<role>.env` (host-scripts, fathom, paperclip, approval-webhook, cron-scripts).
@@ -34,17 +34,26 @@ Status: Migration complete as of 2026-04-23.
 - All mid-session secret fetches go through the same proxy.
 - `BAO_PROXY_ADDR=http://127.0.0.1:8100` is exported for agent use.
 
-### 1Password has NO role for VPS or agents
+### 1Password is not a runtime source for VPS or agents
 
-OpenBao is the only credential store for anything VPS-related, including:
+OpenBao is the only runtime credential store for anything VPS-related, including:
 - Agent runtime secrets (API keys, tokens)
 - VPS provider account credentials (Hostinger hPanel login, etc.)
 - SSH keys for VPS access
 - Any third-party service the VPS or agents touch
 
-Existing 1P entries for VPS-related credentials (e.g. "Hostinger" items in ARC vault) are STALE and should be ignored. Do not pull from 1P for any VPS work - go to OpenBao.
+1Password remains valid for human custody, backup, OpenBao bootstrap material,
+emergency recovery, migration, manual handoff, and newly created credential
+capture. If a VPS or agent runtime credential exists only in 1Password, that is
+a drift signal. Report the missing OpenBao path, then promote or mirror the
+credential into OpenBao before an agent, scheduler, CI job, MCP server, deploy,
+or service consumes it.
 
-The `op` CLI, `OP_SERVICE_ACCOUNT_TOKEN`, `setup-op.sh`, and any `op read` / `op run` calls must be removed from all agent containers. NOT done yet for Hermes.
+The `op` CLI, `OP_SERVICE_ACCOUNT_TOKEN`, `OP_SESSION`, `setup-op.sh`, and any
+`op read` / `op run` calls must be removed from all agent containers and
+long-running runtime environments. 1Password reads are allowed only for human
+login, bootstrap, recovery, migration, newly created credential capture, or an
+explicitly approved emergency/manual handoff.
 
 ### Open migration items (Hermes)
 
@@ -67,13 +76,21 @@ The `op` CLI, `OP_SERVICE_ACCOUNT_TOKEN`, `setup-op.sh`, and any `op read` / `op
 
 For any local CLI/tool talking to a VPS-hosted service (Plane, Supabase, Discord, OpenRouter, etc.):
 
-1. Env var override (`PLANE_API_KEY=...`)
-2. Local cache file under `~/.cache/<tool>/token` with TTL
-3. `ssh zeroclaw 'bash /root/bao-env.sh printenv <VAR>'` - the canonical fetch
+1. OpenBao via the direct Cloudflare AppRole path or `ssh zeroclaw` plus
+   `/opt/openbao-wrapper/lib.sh`.
+2. A local cache file under `~/.cache/<tool>/token` with TTL only when the cache
+   was populated from OpenBao and never stores an unredacted long-lived secret
+   outside the approved cache boundary.
+3. Explicit env var override only for local, one-off human debugging. Do not
+   wire env vars as the scheduler, MCP, CI, deploy, or service credential
+   source.
 
 **Never:** put `op read 'op://...'` as primary or fallback in a local CLI.
 
-**Why:** OpenBao is single source of truth. 1Password is human/disaster-recovery backup of the AppRole creds themselves, not a live secret store for runtime. Treating 1P as "easy fallback" creates drift between stores and reintroduces the failure mode the OpenBao migration killed.
+**Why:** OpenBao is the runtime source of truth. 1Password is human custody,
+backup, bootstrap, recovery, migration, and manual handoff. Treating 1P as
+"easy fallback" creates drift between stores and reintroduces the failure mode
+the OpenBao migration killed.
 
 **How to apply:** When planning any tool needing a service token, first question is "what's the OpenBao path?" Check known paths (`shared/plane-api-key`, `tool-infra/supabase-*`, etc.). Only ask user for token if path genuinely unknown and not yet in OpenBao.
 
@@ -89,7 +106,10 @@ For any local CLI/tool talking to a VPS-hosted service (Plane, Supabase, Discord
 
 **Option A - Direct (preferred): AppRole via vault.aibrainbuilders.com**
 - Cloudflare Tunnel exposes OpenBao at `https://vault.aibrainbuilders.com`
-- Local Claude Code has AppRole `claude-code-local` - bootstrapped from 1P ARC item "OpenBao AppRole - claude-code-local"
+- Local Claude Code has AppRole `claude-code-local` - bootstrap material is
+  held in 1P ARC item "OpenBao AppRole - claude-code-local". This 1Password read
+  is for OpenBao authentication, not for the Plane, Supabase, Discord, or other
+  service token itself.
 - Audit log shows `claude-code-local` fingerprint (NOT zeroclaw's identity)
 - Pattern (Python, no SSH):
   ```python
@@ -109,30 +129,39 @@ For any local CLI/tool talking to a VPS-hosted service (Plane, Supabase, Discord
       headers={'X-Vault-Token': token, 'User-Agent': 'vault-client/1.0'})).read())['data']['data']['value']
   ```
 
-**Option B - SSH fallback (writes/admin only):** SSH to zeroclaw with root token from 1P ARC
+**Option B - SSH admin path (writes/policy changes only):** SSH to zeroclaw with
+root token from 1P ARC
   ```
   ROOT=$(op item get hl23px33remaz2xecl5ecvvaem --vault ARC --fields root_token --reveal)
   ssh zeroclaw "VAULT_ADDR='http://127.0.0.1:8200' BAO_TOKEN='$ROOT' /usr/local/bin/bao kv put secret/<path> value=<val>"
   ```
-  Use Option B only for writes/policy changes. Reads go via Option A.
+  Use Option B only for writes/policy changes. Reads go via Option A or the
+  host wrapper with the least-privileged AppRole that covers the path.
 
-- If vault.aibrainbuilders.com unreachable: declare "⚠ EMERGENCY FALLBACK: OpenBao unreachable - [exact error]. Using 1P. This is broken and needs fixing." Then and only then use 1P.
+- If vault.aibrainbuilders.com is unreachable for a runtime service token:
+  fail loud with the exact error and intended OpenBao path. Use 1Password only
+  when the user explicitly approves an emergency or manual handoff, and report
+  that the credential must be repaired or mirrored back into OpenBao.
 
 ---
 
-## 2) 1Password - local-only role
+## 2) 1Password - custody, bootstrap, and human role
 
 ### Two-tier lookup model
 
 | Credential type | Where to look |
 |-----------------|---------------|
-| Service API tokens (Plane, Supabase, OpenRouter, Discord bot tokens, Anthropic, etc.) | **OpenBao only.** Never fall back to 1P. If missing, add to OpenBao, do not pull from 1P. |
-| Provider account logins (Hostinger hPanel, GitHub web UI, Skool admin, Stripe dashboard, etc.) | OpenBao first. If missing, **automatically** fall back to 1P CLI. Note in output which store it came from so we know what to migrate. |
-| One-off secrets the user just mentioned | Ask user where to put it. Default answer is OpenBao. |
+| Service API tokens (Plane, Supabase, OpenRouter, Discord bot tokens, Anthropic, OAuth refresh tokens, webhooks, deploy tokens, etc.) | **OpenBao for runtime.** If missing, capture the new credential in 1Password first for human custody, then manually promote or mirror it into OpenBao before runtime use. |
+| Provider account logins (Hostinger hPanel, GitHub web UI, Skool admin, Stripe dashboard, etc.) | 1Password is valid for human login and browser-assisted human workflows. OpenBao may hold mirrored copies when automation needs them. |
+| One-off secrets the user just mentioned | Store in 1Password first for custody. Promote or mirror to OpenBao before any agent, automation, scheduler, MCP, CI, deploy, or service consumes it. |
 
-**Why the split:** Service tokens are runtime infrastructure - one place avoids drift. Account logins are mostly used by humans + browser automation; migration of those into OpenBao is incomplete, so the 1P fallback is a bridge until that work finishes.
+**Why the split:** Service tokens are runtime infrastructure, so one runtime
+source avoids drift. Account logins are mostly used by humans plus browser
+automation and can remain in 1Password unless they become runtime inputs.
 
-We do NOT ask "where is this credential?" - we just go look. If OpenBao misses on an account login, automatically check 1P before bothering the user.
+Do not ask "where is this credential?" until the documented lookup path has
+been exhausted. For runtime tokens, 1Password is not the normal second runtime
+store. It is custody, migration, recovery, or explicit manual handoff.
 
 ### Browser automation prep - mandatory checklist
 
@@ -141,51 +170,38 @@ Before generating any prompt that drives a browser automation tool (arc-browser,
 1. Try OpenBao first.
    - On VPS: AppRole via `/opt/openbao-wrapper/lib.sh` then `bao_get <path> <field>`
    - From local machine: `ssh zeroclaw 'source /opt/openbao-wrapper/lib.sh && export BAO_AUTH_FILE=/etc/openbao/host-scripts.env && bao_auth >/dev/null && bao_get <path> <field>'`
-2. On 403 / 404 / empty value, try 1Password CLI.
+2. For account logins only, use 1Password after OpenBao misses.
    - Find item: `op item list --vault ARC | grep -i <service>`
    - Read fields: `op item get <id> --vault ARC --fields label=username,label=password --reveal`
-3. If both miss, then ask the user.
+3. For service/runtime tokens, do not use 1Password as silent fallback. Report
+   the exact OpenBao miss or failure and the intended path.
 4. Bake the **exact retrieval command** into the agent prompt. Do not make the downstream agent rediscover the lookup. It should run one command and get the credential.
-5. Note in the agent prompt which store the credential came from. If from 1P, flag as migration TODO.
+5. Note in the agent prompt which store the credential came from. If a runtime
+   token came from 1Password under explicit emergency/manual handoff, flag the
+   OpenBao repair as mandatory follow-up.
 
 **Why this matters:** Without it, every browser-automation task stalls at credential lookup, user gets pinged for something we could have figured out, we lose a turn. With it, prep step is automatic and agent prompt is always self-sufficient.
 
-### LaunchAgent - op token injection for GUI apps (Mac)
+### 1Password biometric workflow for local human operations (Mac)
 
-GUI apps on macOS (Claude Code Desktop, etc.) do NOT inherit shell env from `.zprofile` or `.zshrc`. So `OP_SERVICE_ACCOUNT_TOKEN` set there never reaches Claude Code or any of its hook subprocesses, and `op` falls back to Apple Events IPC with 1Password.app -> macOS TCC popup "op would like to access data from other apps" -> popup repeats every hook call because TCC grants are bound to calling process context.
+When a concealed `op read` or `op item get --reveal` call is allowed for human
+login, bootstrap, recovery, migration, new-credential capture, or explicit
+manual handoff, 1Password biometric approval is the human confirmation.
 
-**Solution in place (2026-04-25):**
+Do not ask the user to reply "approved" after launching the command. Run `op`,
+let the user approve with fingerprint or in 1Password.app, then poll or retry
+briefly. If the first attempt times out or returns a prompt/authorization
+error, open 1Password and retry the same operation. Stop only after repeated
+retries prove the app is locked, desktop integration is disabled, or the item
+or field is missing.
 
-- LaunchAgent: `~/Library/LaunchAgents/com.local.op-env.plist` (Label: `com.local.op-env`, RunAtLoad=true)
-- Script: `~/Library/Scripts/op-env-inject.sh`
-
-What the script does on every user login:
-1. Reads service account token from macOS Keychain (`security find-generic-password -s op-service-account`)
-2. Injects via `launchctl setenv OP_SERVICE_ACCOUNT_TOKEN "$tok"` so all subsequently launched GUI apps inherit it
-3. Refreshes TCC AppleEvents grant for current `op` binary path (handles `op` updates that change Caskroom version path)
-
-TCC grant target: `com.todesktop.230313mzl4w4u92` (1Password 8 desktop bundle ID, built with ToDesktop framework).
-TCC table: `$HOME/Library/Application Support/com.apple.TCC/TCC.db` - writable when terminal has Full Disk Access.
-TCC values for INSERT OR REPLACE: service=`kTCCServiceAppleEvents`, client=resolved op path, client_type=1 (binary), auth_value=2 (allowed), auth_reason=3 (user set), indirect_object_identifier=1Password bundle ID, indirect_object_identifier_type=0 (bundle).
-
-**Verify it's working:**
+`OP_SERVICE_ACCOUNT_TOKEN` and `OP_SESSION` must not be inherited by
+schedulers, MCP servers, CI, deploy jobs, agent containers, or runtime services.
+For scheduler checks, verify they are absent:
 ```bash
-launchctl getenv OP_SERVICE_ACCOUNT_TOKEN | head -c 20   # should print "ops_..."
-launchctl list | grep com.local.op-env                    # should show PID + 0 exit
-sqlite3 "$HOME/Library/Application Support/com.apple.TCC/TCC.db" \
-  "SELECT client, auth_value FROM access WHERE service='kTCCServiceAppleEvents' AND client LIKE '%op%';"
+launchctl getenv OP_SERVICE_ACCOUNT_TOKEN
+launchctl getenv OP_SESSION
 ```
-
-**Why this matters:**
-- Without LaunchAgent: every hook subprocess that touches `op` (directly or via `lean-ctx`, composure, or any MCP server fetching secrets) triggers a TCC popup - GUI apps don't inherit shell env; `op` without `OP_SERVICE_ACCOUNT_TOKEN` falls back to Apple Events to 1Password.app; TCC for Apple Events is per-caller-context so CLI tools triggered from different parent processes get fresh prompts.
-- With LaunchAgent: `op` always finds token in env, never tries Apple Events, never triggers TCC. Belt-and-suspenders: TCC grant exists too, so even if token vanishes, no popup.
-
-**Caveat - reboot required after install:** `launchctl setenv` only affects processes spawned AFTER the call. Already-running GUI apps (Claude Code Desktop) need to be quit and relaunched to pick up the new env var.
-
-**Files:**
-- `~/Library/LaunchAgents/com.local.op-env.plist`
-- `~/Library/Scripts/op-env-inject.sh`
-- `/tmp/op-env-inject.log` (stderr if anything goes wrong)
 
 ### credsync tool
 
@@ -201,8 +217,10 @@ Defaults: dry-run, conflict detection, no value print without --reveal
 
 Never use `.env` or `.env.example` files for any system. All credentials, API keys, URLs containing secrets, and config-with-secrets must be sourced from:
 
-- **1Password** - quick local needs (developer workstation, one-off scripts)
-- **OpenBao** - everything else (services, agents, VPS deployments, CI)
+- **1Password** - human custody, human login, bootstrap, recovery, migration,
+  manual handoff, and new-credential capture
+- **OpenBao** - runtime credentials for services, agents, schedulers, MCP
+  servers, CI, deploys, and automation
 
 When auditing or scaffolding a repo, if `.env` / `.env.example` exists, treat as tech debt. Update project README/setup docs to repeat this rule so it doesn't creep back in.
 
@@ -210,7 +228,9 @@ When auditing or scaffolding a repo, if `.env` / `.env.example` exists, treat as
 
 **How to apply:**
 - Refuse to create `.env` or `.env.example` files
-- When repo references `.env`, propose replacement: `op read "op://<vault>/<item>/<field>"` for 1P, or arcbao/OpenBao client for service credentials
+- When repo references `.env`, propose replacement: 1Password only for human
+  login or local-only custody, and OpenBao client or wrapper reads for service
+  credentials
 - Add line to repo README/setup docs stating the rule
 - Existing `.env.example` files in repos: flag for removal as part of any work touching that area
 
@@ -224,7 +244,10 @@ When auditing or scaffolding a repo, if `.env` / `.env.example` exists, treat as
 - Never use Anthropic API keys for 3rd-party LLM calls (cross-ref: `feedback_no_anthropic_oauth_misuse` if present).
 - For local CLIs: env var > cache file (with TTL) > `ssh zeroclaw` fetch. Never `op read` as primary/fallback for VPS service tokens.
 - Browser automation: resolve every credential BEFORE the prompt, bake exact retrieval command in.
-- On 403/404/empty from OpenBao for an account login, auto-fall to 1P. For service tokens, do NOT auto-fall - fix OpenBao instead.
+- On 403/404/empty from OpenBao for an account login, use 1Password as the
+  human login source. For service tokens, do not auto-fall to 1P. Fix or
+  populate OpenBao instead, unless the user explicitly approves emergency or
+  manual handoff.
 
 ## Reference cross-links
 
@@ -252,7 +275,9 @@ If the only option appears to be storing a key externally: stop and design Optio
 
 Service tokens = API keys, bearer tokens, webhook URLs, bot tokens, worker secrets, PATs, OAuth tokens.
 
-If a token is missing from OpenBao: mirror it using `bao kv put secret/<path> value=<token>` (root token pattern), then fetch from OpenBao. Never use 1P as the runtime path.
+If a token is missing from OpenBao: create or capture it in 1Password first for
+human custody, mirror it using `bao kv put secret/<path> value=<token>` (root
+token pattern), then fetch from OpenBao. Never use 1P as the runtime path.
 
 Bash permission entries must use literal path references, NEVER hardcoded tokens:
 - CORRECT: `Bash(ssh zeroclaw "VAULT_ADDR=... BAO_TOKEN=... bao kv get secret/...":*)`
